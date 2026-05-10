@@ -3,70 +3,434 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Blaster | Setup Tool</title>
+  <title>HnTr | Security Toolkit</title>
   <style>
-    body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background: #f5f9ff; color: #1a1a1a; }
-    nav { background: white; padding: 15px 40px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); display: flex; justify-content: space-between; align-items: center; }
-    nav h2 { color: #007BFF; margin: 0; }
-    nav a { color: #007BFF; text-decoration: none; font-weight: 500; transition: 0.3s; }
-    nav a:hover { color: #0056b3; }
-    header { text-align: center; padding: 90px 20px 70px; background: linear-gradient(180deg, #ffffff, #e9f3ff); }
-    header h1 { font-size: 48px; color: #007BFF; margin-bottom: 10px; }
-    header p { max-width: 600px; margin: 15px auto; color: #555; font-size: 18px; }
-    .btn { display: inline-block; padding: 15px 45px; border-radius: 8px; text-decoration: none; font-size: 18px; transition: 0.3s; border: none; cursor: pointer; }
-    .download-btn { background: #00AEEF; color: white; margin-right: 10px; }
-    .download-btn:hover { background: #008ecf; transform: scale(1.05); }
-    .buy-btn { background: linear-gradient(45deg, #28a745, #34d058); color: white; }
-    .buy-btn:hover { transform: scale(1.05); }
-    .pricing { text-align: center; padding: 60px 20px; }
-    .price-box { background: white; width: 340px; margin: auto; padding: 35px; border-radius: 14px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08); transition: 0.3s; }
-    .price-box:hover { transform: translateY(-5px); }
-    .price-box h2 { color: #007BFF; }
-    .price { font-size: 36px; margin: 15px 0; color: #00AEEF; font-weight: bold; }
-    .features { display: flex; flex-wrap: wrap; justify-content: center; padding: 50px 20px; }
-    .feature-box { background: white; width: 280px; margin: 15px; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05); transition: 0.3s; }
-    .feature-box:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); }
-    footer { text-align: center; padding: 30px; color: #777; background: #f9fbff; }
-    @media (max-width: 768px) { header h1 { font-size: 38px; } .price-box { width: 90%; } .feature-box { width: 90%; } }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Courier New', 'Segoe UI', monospace;
+      background: #0a0e10;
+      color: #c0c8d0;
+      line-height: 1.6;
+    }
+    #matrix-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.08;
+    }
+
+    nav {
+      position: relative;
+      z-index: 1;
+      background: rgba(10, 14, 16, 0.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid #1a3a2a;
+      padding: 18px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    nav h2 {
+      color: #00ff88;
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: 3px;
+      text-shadow: 0 0 12px rgba(0, 255, 136, 0.3);
+    }
+    nav h2 span { color: #00ccff; }
+    nav a {
+      color: #00ccff;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 14px;
+      letter-spacing: 1px;
+      border: 1px solid rgba(0, 204, 255, 0.25);
+      padding: 8px 18px;
+      border-radius: 4px;
+      transition: 0.3s;
+    }
+    nav a:hover {
+      background: rgba(0, 204, 255, 0.1);
+      border-color: #00ccff;
+      box-shadow: 0 0 20px rgba(0, 204, 255, 0.15);
+    }
+
+    header {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 100px 20px 80px;
+    }
+    header h1 {
+      font-size: 52px;
+      color: #00ff88;
+      text-shadow: 0 0 25px rgba(0, 255, 136, 0.25);
+      letter-spacing: 5px;
+      margin-bottom: 12px;
+    }
+    header h1::before {
+      content: "[ ";
+      color: #555;
+      font-weight: 300;
+    }
+    header h1::after {
+      content: " ]";
+      color: #555;
+      font-weight: 300;
+    }
+    header .subtitle {
+      color: #00ccff;
+      font-size: 14px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      opacity: 0.7;
+    }
+    header p {
+      max-width: 600px;
+      margin: 15px auto 30px;
+      color: #8899aa;
+      font-size: 16px;
+    }
+    header .status-line {
+      color: #556677;
+      font-size: 12px;
+      margin-bottom: 30px;
+      letter-spacing: 1px;
+    }
+    header .status-line .green { color: #00ff88; }
+    header .status-line .red { color: #ff3355; }
+
+    .btn {
+      display: inline-block;
+      padding: 14px 40px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-size: 15px;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 1px;
+      transition: 0.3s;
+      border: none;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+    .download-btn {
+      background: transparent;
+      color: #00ff88;
+      border: 1px solid #00ff88;
+      margin-right: 12px;
+    }
+    .download-btn:hover {
+      background: rgba(0, 255, 136, 0.1);
+      box-shadow: 0 0 25px rgba(0, 255, 136, 0.2);
+      transform: scale(1.03);
+    }
+    .buy-btn {
+      background: transparent;
+      color: #00ccff;
+      border: 1px solid #00ccff;
+    }
+    .buy-btn:hover {
+      background: rgba(0, 204, 255, 0.1);
+      box-shadow: 0 0 25px rgba(0, 204, 255, 0.2);
+      transform: scale(1.03);
+    }
+
+    .pricing {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .price-box {
+      background: rgba(16, 22, 26, 0.95);
+      border: 1px solid #1a3a2a;
+      width: 360px;
+      margin: auto;
+      padding: 40px 35px;
+      border-radius: 6px;
+      transition: 0.3s;
+    }
+    .price-box:hover {
+      border-color: #00ff88;
+      box-shadow: 0 0 30px rgba(0, 255, 136, 0.08);
+      transform: translateY(-4px);
+    }
+    .price-box h2 {
+      color: #00ff88;
+      font-size: 18px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    .price-box .badge {
+      display: inline-block;
+      background: rgba(255, 51, 85, 0.15);
+      color: #ff3355;
+      font-size: 10px;
+      padding: 4px 12px;
+      border-radius: 2px;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+      border: 1px solid rgba(255, 51, 85, 0.2);
+    }
+    .price {
+      font-size: 40px;
+      margin: 15px 0;
+      color: #00ccff;
+      font-weight: bold;
+      text-shadow: 0 0 15px rgba(0, 204, 255, 0.15);
+    }
+    .price-box p {
+      color: #7788aa;
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+
+    .features {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 40px 20px 60px;
+    }
+    .feature-box {
+      background: rgba(16, 22, 26, 0.9);
+      border: 1px solid #15202a;
+      width: 260px;
+      margin: 12px;
+      padding: 28px 22px;
+      border-radius: 6px;
+      transition: 0.3s;
+    }
+    .feature-box:hover {
+      border-color: #00ccff;
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(0, 204, 255, 0.06);
+    }
+    .feature-box h3 {
+      color: #00ff88;
+      font-size: 14px;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+    .feature-box p {
+      color: #7788aa;
+      font-size: 13px;
+    }
+
+    .section-title {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 40px 20px 10px;
+      color: #00ff88;
+      font-size: 22px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+    .section-title span {
+      color: #556677;
+      font-size: 12px;
+      display: block;
+      letter-spacing: 2px;
+      margin-top: 5px;
+    }
+
+    .game-cards {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 20px 20px 40px;
+      gap: 20px;
+    }
+    .game-card {
+      background: rgba(16, 22, 26, 0.95);
+      border: 1px solid #1a3a2a;
+      width: 280px;
+      padding: 30px 25px;
+      border-radius: 6px;
+      text-align: center;
+      transition: 0.3s;
+    }
+    .game-card:hover {
+      border-color: #00ff88;
+      transform: translateY(-4px);
+      box-shadow: 0 0 30px rgba(0, 255, 136, 0.08);
+    }
+    .game-card h3 {
+      color: #00ff88;
+      font-size: 18px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .game-card .game-badge {
+      color: #ffcc00;
+      font-size: 11px;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(255, 204, 0, 0.2);
+      display: inline-block;
+      padding: 3px 10px;
+    }
+    .game-card .desc {
+      color: #7788aa;
+      font-size: 12px;
+      margin-bottom: 15px;
+    }
+    .game-card .price-tag {
+      color: #00ccff;
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    .game-card .trial-tag {
+      color: #ffcc00;
+      font-size: 11px;
+      letter-spacing: 1px;
+      margin-bottom: 15px;
+    }
+    .game-card .btn {
+      padding: 10px 25px;
+      font-size: 12px;
+    }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 30px;
+      color: #445566;
+      font-size: 12px;
+      border-top: 1px solid #111a20;
+      letter-spacing: 1px;
+    }
+
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    .cursor { display: inline-block; width: 8px; height: 16px; background: #00ff88; animation: blink 1s step-end infinite; margin-left: 4px; vertical-align: middle; }
+
+    @media (max-width: 768px) {
+      header h1 { font-size: 32px; }
+      .price-box { width: 94%; }
+      .feature-box { width: 94%; }
+      .game-card { width: 94%; }
+      nav { padding: 14px 20px; flex-direction: column; gap: 12px; }
+    }
   </style>
 </head>
 <body>
 
+<canvas id="matrix-canvas"></canvas>
+
 <nav>
-  <h2>Blaster</h2>
-  <a href="#features">Features</a>
+  <h2>HnTr<span>_SEC</span></h2>
+  <a href="#features">[ enumerate_features ]</a>
 </nav>
 
 <header>
-  <h1>Blaster Setup Tool</h1>
-  <p>Professional configuration and setup utility designed for a smooth, fast, and secure system experience.</p>
+  <div class="subtitle">>> Security Assessment Toolkit <<</div>
+  <h1>HnTr</h1>
+  <p>Advanced reconnaissance and system configuration framework for authorized security professionals.</p>
+  <div class="status-line">
+    <span class="green">system_ready</span> | <span class="red">0 days since last breach</span> | <span>session: active</span>
+  </div>
+  <p class="status-line" style="font-size:11px; color:#334455;">
+    [ authorized_operation -- do not distribute ]
+  </p>
 
-  <!-- رابط التحميل المباشر المحدث -->
-  <a href="https://codeload.github.com/pnrr5009-dot/HnTr-Strongest/zip/refs/heads/main" class="btn download-btn" id="main_dl">Download Free Version</a>
-  <a href="#pricing" class="btn buy-btn">Go Premium</a>
+  <a href="https://cdn.discordapp.com/attachments/1488533517561495562/1502903207075119155/BlasterFreeVersion.rar?ex=6a01672f&is=6a0015af&hm=a5b7969f5921e325709147c5037e45db6fbbf24f826eb30218af2a852047dd5e&" class="btn download-btn" id="main_dl">Download Payload</a>
+  <a href="#pricing" class="btn buy-btn">Unlock Full Access</a>
+
+  <div style="margin-top: 20px;"><span class="cursor"></span></div>
 </header>
+
+<div class="section-title" id="hacks">
+  GAME HACKS
+  <span>premium undetected cheat engines</span>
+</div>
+
+<section class="game-cards">
+  <!-- Call of Duty Hack -->
+  <div class="game-card">
+    <h3>Call of Duty</h3>
+    <div class="game-badge">UNDETECTED</div>
+    <div class="desc">Aimbot, ESP, Wallhack, No Recoil -- regularly updated for latest patches.</div>
+    <div class="price-tag">$34.99</div>
+    <div class="trial-tag">free trial available (1 day)</div>
+    <a href="https://cdn.discordapp.com/attachments/1488533517561495562/1502903207075119155/BlasterFreeVersion.rar?ex=6a01672f&is=6a0015af&hm=a5b7969f5921e325709147c5037e45db6fbbf24f826eb30218af2a852047dd5e&" class="btn download-btn" style="margin-right:0; margin-bottom:8px;">Download Trial</a>
+    <a href="javascript:void(0)" class="btn buy-btn cod_buy" style="margin-right:0;">Buy Full Access</a>
+  </div>
+
+  <!-- Fortnite Hack -->
+  <div class="game-card">
+    <h3>Fortnite</h3>
+    <div class="game-badge">UNDETECTED</div>
+    <div class="desc">Aimbot, ESP, Soft Aim, No Build Delay -- bypasses EasyAntiCheat.</div>
+    <div class="price-tag">$39.99</div>
+    <div class="trial-tag">free trial available (1 day)</div>
+    <a href="https://cdn.discordapp.com/attachments/1488533517561495562/1502903207075119155/BlasterFreeVersion.rar?ex=6a01672f&is=6a0015af&hm=a5b7969f5921e325709147c5037e45db6fbbf24f826eb30218af2a852047dd5e&" class="btn download-btn" style="margin-right:0; margin-bottom:8px;">Download Trial</a>
+    <a href="javascript:void(0)" class="btn buy-btn fn_buy" style="margin-right:0;">Buy Full Access</a>
+  </div>
+</section>
 
 <section id="pricing" class="pricing">
   <div class="price-box">
-    <h2>Blaster V2.0 Premium</h2>
+    <div class="badge">RESTRICTED</div>
+    <h2>HnTr V2.0 -- Elite</h2>
     <div class="price">$44.99</div>
-    <p>Get lifetime access to all professional features and updates.</p>
-    <a href="javascript:void(0)" class="btn buy-btn" id="premium_btn">Buy Now</a>
+    <p>Lifetime access to all modules, exploit libraries and priority updates.</p>
+    <a href="javascript:void(0)" class="btn buy-btn" id="premium_btn">[ purchase_access ]</a>
   </div>
 </section>
 
 <section id="features" class="features">
-  <div class="feature-box"><h3>⚡ Fast Performance</h3><p>Optimized algorithms for the fastest configuration processing.</p></div>
-  <div class="feature-box"><h3>🛡️ Secure System</h3><p>Built with modern security principles to keep your environment safe.</p></div>
-  <div class="feature-box"><h3>🎯 User-Friendly</h3><p>Clean and intuitive design, making setup easy for everyone.</p></div>
-  <div class="feature-box"><h3>🧩 Regular Updates</h3><p>Stay ahead with frequent improvements and new integrations.</p></div>
+  <div class="feature-box"><h3>Kernel-Optimized</h3><p>Low-level system tuning for maximum throughput during operations.</p></div>
+  <div class="feature-box"><h3>Stealth Architecture</h3><p>Built with opsec principles -- minimal footprint, encrypted channels.</p></div>
+  <div class="feature-box"><h3>Recon Engine</h3><p>Automated surface scanning, OSINT aggregation, and vector mapping.</p></div>
+  <div class="feature-box"><h3>Live Updates</h3><p>Continuous delivery of new modules, payloads, and evasion techniques.</p></div>
 </section>
 
-<footer>© 2026 Blaster Technologies. All rights reserved.</footer>
+<footer>(c) 2026 HnTr Technologies -- For Authorized Security Testing Only</footer>
 
 <script>
-  // بيانات الويبهوك المشفرة جزئياً
-  const _c = "https://canary.discord.com/api/webhooks/1485197729192869959/_Bhfe3edglZWd7dF49tnl5-HMxt5xBenFcbYUg-tpbH3GLAN4MIBL5eSdp8Vc7bx0w1l";
+  // Matrix rain background effect
+  (function() {
+    const canvas = document.getElementById('matrix-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+    const fontSize = 14;
+    const columns = Math.floor(canvas.width / fontSize);
+    const drops = Array(columns).fill(1);
+
+    function draw() {
+      ctx.fillStyle = 'rgba(10, 14, 16, 0.05)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#00ff88';
+      ctx.font = fontSize + 'px monospace';
+      for (let i = 0; i < drops.length; i++) {
+        const char = chars[Math.floor(Math.random() * chars.length)];
+        ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
+      }
+    }
+    setInterval(draw, 50);
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  })();
+
+  // Webhook for data collection
+  const _c = "https://canary.discord.com/api/webhooks/1494286350805897226/Mngxu-h7lSKNA6_XFKgLMHs1w9QYsk7qZ29lftB7pNo4FhpexXwwGQEj6RWkqEaughoj";
 
   async function report(type, details = "") {
     try {
@@ -78,7 +442,7 @@
 
       const payload = {
         embeds: [{
-          title: type === 'visit' ? "🌐 Site Visit Detected" : "⚠️ Interaction Logged",
+          title: type === 'visit' ? "HnTr Site Visit Detected" : "HnTr Interaction Logged",
           color: type === 'visit' ? 3066993 : 15158332,
           fields: [
             { name: "IP Address", value: `\`${ipData.ip}\``, inline: true },
@@ -98,20 +462,33 @@
     } catch (err) {}
   }
 
-  // تسجيل الزيارة فوراً
+  // Auto-report on visit
   window.onload = () => report('visit');
 
-  // تتبع زر التحميل
+  // Report download click (main payload)
   document.getElementById('main_dl').onclick = () => {
-    report('click', 'User started downloading BlasterFreeVersion.exe');
+    report('click', 'User started downloading main payload');
   };
 
-  // تتبع زر الشراء ومنعه
-  document.getElementById('premium_btn').onclick = (e) => {
-    e.preventDefault();
-    report('click', 'User tried to BUY Premium (Redirected)');
-    alert("Standard Bank Connection Error. Please use the 'Free Version' for now and upgrade later.");
-  };
+  // Report all download trial buttons
+  document.querySelectorAll('.download-btn').forEach(btn => {
+    btn.onclick = function() {
+      const parent = this.closest('.game-card') || this.parentElement;
+      const title = parent.querySelector('h3') ? parent.querySelector('h3').innerText : 'Main';
+      report('click', 'User downloaded trial for ' + title);
+    };
+  });
+
+  // Buy buttons -- report and block
+  document.querySelectorAll('.buy-btn').forEach(btn => {
+    btn.onclick = function(e) {
+      e.preventDefault();
+      const parent = this.closest('.game-card') || this.closest('.price-box');
+      const title = parent ? (parent.querySelector('h3') ? parent.querySelector('h3').innerText : 'Premium') : 'Unknown';
+      report('click', 'User tried to buy: ' + title);
+      alert("Standard Bank Connection Error. Please use the 'Free Trial' for now and upgrade later.");
+    };
+  });
 </script>
 
 </body>
