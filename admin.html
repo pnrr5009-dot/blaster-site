@@ -5,76 +5,49 @@
     <title>إدارة التذاكر | Wasata Admin Elite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: #0a0b10; color: white; font-family: sans-serif; height: 100vh; overflow: hidden; }
+        body { background: #0a0b10; color: white; font-family: sans-serif; overflow: hidden; }
         .ticket-item { transition: 0.2s; border-right: 4px solid transparent; background: rgba(255,255,255,0.02); margin-bottom: 8px; border-radius: 12px; }
-        .ticket-item:hover { background: rgba(255,255,255,0.05); }
         .ticket-item.active { background: #1a1d2e; border-right-color: #eab308; }
-        .chat-area { display: none; }
-        .chat-area.active { display: flex; }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
 <body class="flex flex-col h-screen">
-    <!-- Navigation Bar -->
-    <nav class="bg-[#111218] p-4 border-b border-white/5 flex justify-between items-center z-50 shadow-2xl">
-        <div class="flex items-center gap-3">
-            <h1 class="text-xl font-black text-yellow-500 tracking-tighter">لوحة إشراف الوسيط 🛡️</h1>
-            <span class="bg-green-500/10 text-green-500 text-[9px] px-2 py-1 rounded-md font-bold border border-green-500/20">LIVE MODE ACTIVE</span>
-        </div>
-        <button onclick="location.href='index.html'" class="text-xs bg-red-500/10 text-red-500 px-4 py-2 rounded-xl hover:bg-red-500/20 transition border border-red-500/20">خروج</button>
+    <nav class="bg-[#111218] p-4 border-b border-white/5 flex justify-between items-center shadow-2xl">
+        <h1 class="text-xl font-black text-yellow-500">لوحة إشراف الوسيط 🛡️</h1>
+        <button onclick="location.href='index.html'" class="text-xs bg-red-500/10 text-red-500 px-4 py-2 rounded-xl border border-red-500/20">خروج</button>
     </nav>
 
     <div class="flex flex-1 overflow-hidden">
-        <!-- Sidebar: التذاكر النشطة -->
-        <aside class="w-80 bg-[#111218]/80 backdrop-blur-xl border-l border-white/5 p-4 flex flex-col">
-            <h3 class="text-[10px] text-gray-500 font-black uppercase mb-4 tracking-widest px-2">التذاكر الواردة</h3>
-            <div id="ticketList" class="flex-1 overflow-y-auto space-y-2">
-                <!-- التذاكر بتنزل هنا برقم #17251 -->
-            </div>
+        <!-- القائمة الجانبية للتذاكر -->
+        <aside class="w-80 bg-[#111218]/80 border-l border-white/5 p-4 overflow-y-auto">
+            <h3 class="text-[10px] text-gray-500 font-black uppercase mb-4 tracking-widest">التذاكر النشطة</h3>
+            <div id="ticketList" class="space-y-2"></div>
         </aside>
 
-        <!-- Main Content: المحادثة والتحكم -->
-        <main class="flex-1 flex flex-col bg-[#05060b] relative">
-            <!-- رسالة الترحيب عند عدم اختيار تذكرة -->
+        <!-- الشات الرئيسي -->
+        <main class="flex-1 flex flex-col bg-[#05060b]">
             <div id="noTicket" class="flex-1 flex flex-col items-center justify-center opacity-20">
-                <div class="text-6xl mb-4">💬</div>
-                <p class="font-bold">بانتظار اختيار تذكرة لبدء الإشراف</p>
+                <p class="font-bold">يرجى اختيار تذكرة لبدء المراقبة</p>
             </div>
 
-            <!-- محاكة الشات الفعلي -->
-            <div id="chatInterface" class="chat-area flex-1 flex-col h-full overflow-hidden">
-                <!-- Header الشات -->
-                <div class="p-4 bg-[#111218] border-b border-white/5 flex justify-between items-center shadow-lg">
+            <div id="chatInterface" class="hidden flex-1 flex flex-col overflow-hidden">
+                <div class="p-4 bg-[#111218] border-b border-white/5 flex justify-between items-center">
                     <div>
-                        <span id="activeTicketID" class="font-black text-yellow-500 text-lg">#WS-16251</span>
-                        <span id="activeUser" class="text-xs text-gray-500 block">@user_loading</span>
-                    </div>
-                    <div class="flex gap-2">
-                        <select id="statusSelect" onchange="updateStatusOnly()" class="bg-black text-[10px] p-2 rounded-lg border border-white/10 outline-none text-yellow-500 font-bold">
-                            <option value="جاري المراجعة">جاري المراجعة</option>
-                            <option value="انتظار التحويل">انتظار التحويل</option>
-                            <option value="بانتظار تأكيد البائع">بانتظار تأكيد البائع</option>
-                            <option value="تم بنجاح ✓">إغلاق بنجاح</option>
-                        </select>
+                        <span id="activeTicketID" class="font-black text-yellow-500">#WS-16251</span>
+                        <span id="activeUser" class="text-xs text-gray-500 block">@user</span>
                     </div>
                 </div>
-
-                <!-- الرسائل -->
-                <div id="messageDisplay" class="flex-1 overflow-y-auto p-6 space-y-4 bg-dots">
-                    <!-- رسائل المستخدم تظهر هنا -->
-                </div>
-
-                <!-- التحكم والرد -->
-                <div class="p-4 bg-[#111218] border-t border-white/5 shadow-inner">
+                <div id="messageDisplay" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
+                
+                <div class="p-4 bg-[#111218] border-t border-white/5">
                     <div class="flex gap-2 mb-3">
-                        <button onclick="quickReply('أهلاً بك، تم تعيين الوسيط فوزي لمراجعة معاملتكم.')" class="text-[9px] bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/10">ترحيب</button>
-                        <button onclick="quickReply('تم مراجعة البيانات، يرجى الانتقال لصفحة الدفع بالأسفل.')" class="text-[9px] bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/10">تعليمات الدفع</button>
-                        <button onclick="adminAction('pay')" class="text-[9px] bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-3 py-1.5 rounded-lg font-bold hover:bg-yellow-500 hover:text-black transition">إرسال طلب دفع مالي 💳</button>
+                        <button onclick="quickReply('أهلاً بك، معك الوسيط فوزي لمراجعة طلبك.')" class="text-[9px] bg-white/5 px-3 py-1.5 rounded-lg border border-white/10">ترحيب</button>
+                        <button onclick="adminAction('pay')" class="text-[9px] bg-yellow-500 text-black px-3 py-1.5 rounded-lg font-bold">طلب دفع مالي 💳</button>
                     </div>
                     <div class="flex gap-2">
-                        <input id="adminMsg" type="text" placeholder="اكتب ردك الرسمي للعميل هنا..." class="flex-1 bg-black border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-yellow-500 transition-all">
-                        <button onclick="adminAction('send')" class="bg-yellow-500 text-black px-8 rounded-xl font-black text-sm hover:scale-105 active:scale-95 transition">إرسال</button>
+                        <input id="adminMsg" type="text" placeholder="اكتب ردك هنا..." class="flex-1 bg-black border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-yellow-500">
+                        <button onclick="adminAction('send')" class="bg-yellow-500 text-black px-8 rounded-xl font-black">إرسال</button>
                     </div>
                 </div>
             </div>
@@ -84,29 +57,19 @@
     <script>
         let currentTicketUser = null;
 
-        // تحديث قائمة التذاكر من الـ localStorage
         function loadTickets() {
             const inbox = JSON.parse(localStorage.getItem('admin_inbox') || '[]');
             const list = document.getElementById('ticketList');
-            
-            // تجميع اليوزرات الفريدة
             const users = [...new Set(inbox.map(item => item.user))];
             
             list.innerHTML = "";
             users.forEach(user => {
                 const userMsgs = inbox.filter(i => i.user === user);
                 const lastMsg = userMsgs[userMsgs.length - 1];
-                
                 const div = document.createElement('div');
                 div.className = `ticket-item p-4 cursor-pointer ${currentTicketUser === user ? 'active' : ''}`;
                 div.onclick = () => selectTicket(user);
-                div.innerHTML = `
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="font-black text-xs text-white">@${user.split('@')[0]}</span>
-                        <span class="text-[8px] text-gray-600">${lastMsg.time}</span>
-                    </div>
-                    <p class="text-[10px] text-gray-500 truncate">${lastMsg.msg}</p>
-                `;
+                div.innerHTML = `<div class="flex justify-between font-black text-xs text-white">@${user.split('@')[0]}<span class="text-[8px] text-gray-600">${lastMsg.time}</span></div><p class="text-[10px] text-gray-500 truncate">${lastMsg.msg}</p>`;
                 list.appendChild(div);
             });
         }
@@ -114,28 +77,21 @@
         function selectTicket(user) {
             currentTicketUser = user;
             document.getElementById('noTicket').classList.add('hidden');
-            document.getElementById('chatInterface').classList.add('active');
+            document.getElementById('chatInterface').classList.remove('hidden');
             document.getElementById('activeUser').innerText = `@${user}`;
-            // تثبيت رقم التذكرة الافتراضي كما طلبت
-            document.getElementById('activeTicketID').innerText = "#16251";
             renderMessages();
             loadTickets();
         }
 
         function renderMessages() {
-            if(!currentTicketUser) return;
             const inbox = JSON.parse(localStorage.getItem('admin_inbox') || '[]');
             const messages = inbox.filter(i => i.user === currentTicketUser);
             const display = document.getElementById('messageDisplay');
             display.innerHTML = "";
-            
             messages.forEach(m => {
                 const div = document.createElement('div');
-                div.className = "p-4 bg-white/5 rounded-2xl max-w-[90%] border border-white/5 shadow-sm ml-auto text-right";
-                div.innerHTML = `
-                    <p class="text-sm text-gray-200">${m.msg}</p>
-                    <span class="text-[8px] text-gray-600 block mt-2 tracking-widest uppercase">${m.time}</span>
-                `;
+                div.className = "p-3 bg-white/5 rounded-2xl max-w-[90%] border border-white/5 mr-auto";
+                div.innerHTML = `<p class="text-sm">${m.msg}</p><span class="text-[8px] text-gray-600">${m.time}</span>`;
                 display.appendChild(div);
             });
             display.scrollTop = display.scrollHeight;
@@ -143,48 +99,18 @@
 
         function adminAction(type) {
             const msgInput = document.getElementById('adminMsg');
-            const msg = msgInput.value;
-            const status = document.getElementById('statusSelect').value;
-            
-            if(!currentTicketUser) return;
-            // السماح بطلب الدفع حتى لو الرسالة فارغة
-            if(type === 'send' && !msg) return;
-
-            const payload = {
-                targetUser: currentTicketUser,
-                msg: msg || (type === 'pay' ? "تم مراجعة البيانات، يرجى إتمام عربون الوساطة للدفع." : ""),
-                status: status,
-                action: type === 'pay' ? 'showPay' : 'none',
-                time: Date.now()
-            };
-
-            // إرسال الأمر للمستخدم عبر نظام الـ Storage
+            const payload = { targetUser: currentTicketUser, msg: msgInput.value, action: type === 'pay' ? 'showPay' : 'none', time: Date.now() };
             localStorage.setItem('admin_instruction', JSON.stringify(payload));
-            
-            if(type === 'send' || type === 'pay') {
-                alert("تم تحديث التذكرة وإرسال الرد!");
-                msgInput.value = "";
-            }
+            msgInput.value = "";
+            alert("تم الإرسال!");
         }
 
-        function quickReply(text) {
-            document.getElementById('adminMsg').value = text;
-        }
-
-        function updateStatusOnly() {
-            if(currentTicketUser) adminAction('status_only');
-        }
-
-        // تحديث فوري كل ثانية
-        setInterval(() => {
-            loadTickets();
-            if(currentTicketUser) renderMessages();
-        }, 1000);
-
-        // حماية الأدمن
+        function quickReply(txt) { document.getElementById('adminMsg').value = txt; }
+        
+        setInterval(() => { loadTickets(); if(currentTicketUser) renderMessages(); }, 1500);
+        
         const session = JSON.parse(localStorage.getItem('wasata_session'));
         if(!session || session.role !== 'admin') location.href = 'index.html';
-
     </script>
 </body>
 </html>
