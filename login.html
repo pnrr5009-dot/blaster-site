@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تسجيل الدخول | وساطة</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#05060b] text-white flex items-center justify-center min-vh-screen h-screen">
+    <div class="bg-[#111218] p-10 rounded-3xl border border-white/5 w-full max-w-md shadow-2xl">
+        <h2 class="text-3xl font-black mb-6 text-yellow-500">تسجيل الدخول</h2>
+        <div class="space-y-4">
+            <input id="email" type="email" placeholder="البريد الإلكتروني" class="w-full bg-black/50 border border-white/10 p-4 rounded-xl outline-none focus:border-yellow-500 transition">
+            <input id="pass" type="password" placeholder="كلمة المرور" class="w-full bg-black/50 border border-white/10 p-4 rounded-xl outline-none focus:border-yellow-500 transition">
+            <button onclick="handleLogin()" class="w-full bg-yellow-500 text-black font-black py-4 rounded-xl hover:scale-105 transition">دخول</button>
+        </div>
+        <p class="mt-6 text-xs text-gray-500 text-center">أدمن: waseet@wsata.sa | 1234567</p>
+    </div>
+
+    <script>
+        function handleLogin() {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('pass').value;
+
+            if(email === 'waseet@wsata.sa' && pass === '1234567') {
+                localStorage.setItem('wasata_session', JSON.stringify({ email: email, role: 'admin' }));
+                location.href = 'admin.html';
+            } else if(email && pass) {
+                localStorage.setItem('wasata_session', JSON.stringify({ email: email, role: 'user' }));
+                location.href = 'index.html';
+            } else {
+                alert('يرجى إكمال البيانات');
+            }
+        }
+    </script>
+</body>
+</html>

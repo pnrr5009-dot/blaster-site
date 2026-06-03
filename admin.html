@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>لوحة إشراف الوسيط | Wasata Elite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>body { background: #0a0b10; color: white; }</style>
+</head>
+<body class="p-8">
+    <div class="max-w-6xl mx-auto">
+        <div class="flex justify-between items-center bg-[#111218] p-6 rounded-3xl border border-white/5 mb-8">
+            <h1 class="text-2xl font-black text-yellow-500">لوحة تحكم الوسيط المعتمد 🛡️</h1>
+            <div class="bg-green-500/10 text-green-500 px-4 py-1 rounded-full text-xs font-bold border border-green-500/20">حساب موثق: waseet@wsata.sa</div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <!-- قائمة الرسائل القادمة من المستخدمين -->
+            <div class="bg-[#111218] p-6 rounded-3xl border border-white/5 h-[600px] flex flex-col">
+                <h3 class="font-bold border-b border-white/5 pb-4 mb-4">بريد التذاكر الوارد</h3>
+                <div id="inboxList" class="flex-1 overflow-y-auto space-y-3">
+                    <!-- تظهر هنا رسائل المستخدمين -->
+                </div>
+            </div>
+
+            <!-- لوحة التحكم بالتذكرة -->
+            <div class="md:col-span-2 bg-[#111218] p-8 rounded-3xl border border-white/5">
+                <h3 class="text-xl font-black mb-6">التحكم في التذكرة النشطة</h3>
+                
+                <div class="grid grid-cols-2 gap-4 mb-8">
+                    <div>
+                        <label class="text-xs text-gray-500 block mb-2">تحديث حالة التذكرة للمستخدم</label>
+                        <select id="statusSelect" class="w-full bg-black p-3 rounded-xl border border-white/10 outline-none focus:border-yellow-500">
+                            <option value="جاري المراجعة">جاري المراجعة</option>
+                            <option value="انتظار التحويل">انتظار التحويل</option>
+                            <option value="جاري تنفيذ الخدمة">جاري تنفيذ الخدمة</option>
+                            <option value="تم بنجاح ✓">تم بنجاح ✓</option>
+                            <option value="تذكرة ملغية">إلغاء التذكرة</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <label class="text-xs text-gray-500 block">إرسال رسالة رسمية (ستظهر بشارة Verified)</label>
+                    <textarea id="adminMsg" class="w-full h-32 bg-black border border-white/10 p-4 rounded-2xl outline-none focus:border-yellow-500" placeholder="اكتب ردك هنا..."></textarea>
+                    
+                    <div class="flex gap-4">
+                        <button onclick="adminAction('send')" class="flex-1 bg-white/5 border border-white/10 py-4 rounded-2xl font-bold hover:bg-white/10 transition">إرسال رد فقط</button>
+                        <button onclick="adminAction('pay')" class="flex-1 bg-yellow-500 text-black py-4 rounded-2xl font-black shadow-lg shadow-yellow-500/20 hover:scale-[1.02] transition">إرسال طلب دفع 💳</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // التحقق من صلاحية الأدمن
+        const session = JSON.parse(localStorage.getItem('wasata_session'));
+        if(!session || session.role !== 'admin') location.href = 'index.html';
+
+        function adminAction(type) {
+            const msg = document.getElementById('adminMsg').value;
+            const status = document.getElementById('statusSelect').value;
+            
+            if(!msg) { alert("اكتب رسالة أولاً"); return; }
+
+            const payload = {
+                msg: msg,
+                status: status,
+                action: type === 'pay' ? 'showPay' : 'none',
+                time: new Date().getTime()
+            };
+
+            // إرسال التعليمات للمتصفح (صفحة التذكرة)
+            localStorage.setItem('admin_instruction', JSON.stringify(payload));
+            alert("تم تحديث التذكرة وإرسال الرد!");
+            document.getElementById('adminMsg').value = "";
+        }
+
+        // تحديث قائمة الرسائل الواردة من المستخدمين كل ثانية
+        setInterval(() => {
+            const inbox = JSON.parse(localStorage.getItem('admin_inbox') || '[]');
+            const list = document.getElementById('inboxList');
+            list.innerHTML = "";
+            inbox.slice().reverse().forEach(item => {
+                list.innerHTML += `
+                    <div class="bg-black/40 p-3 rounded-xl border border-white/5">
+                        <div class="flex justify-between text-[10px] mb-1">
+                            <span class="text-yellow-500 font-bold">${item.user}</span>
+                            <span class="text-gray-600">${item.time}</span>
+                        </div>
+                        <p class="text-sm">${item.msg}</p>
+                    </div>
+                `;
+            });
+        }, 1000);
+    </script>
+</body>
+</html>
