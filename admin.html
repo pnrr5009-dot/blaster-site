@@ -2,115 +2,106 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>إدارة التذاكر | Wasata Admin Elite</title>
+    <title>لوحة التحكم العالمية | Wasata Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body { background: #0a0b10; color: white; font-family: sans-serif; overflow: hidden; }
-        .ticket-item { transition: 0.2s; border-right: 4px solid transparent; background: rgba(255,255,255,0.02); margin-bottom: 8px; border-radius: 12px; }
+        body { background: #0a0b10; color: white; font-family: sans-serif; overflow: hidden; height: 100vh; }
+        .ticket-item { transition: 0.2s; background: rgba(255,255,255,0.02); margin-bottom: 8px; border-radius: 12px; cursor: pointer; border-right: 4px solid transparent; }
         .ticket-item.active { background: #1a1d2e; border-right-color: #eab308; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
-<body class="flex flex-col h-screen">
+<body class="flex flex-col">
     <nav class="bg-[#111218] p-4 border-b border-white/5 flex justify-between items-center shadow-2xl">
-        <h1 class="text-xl font-black text-yellow-500">لوحة إشراف الوسيط 🛡️</h1>
-        <button onclick="location.href='index.html'" class="text-xs bg-red-500/10 text-red-500 px-4 py-2 rounded-xl border border-red-500/20">خروج</button>
+        <h1 class="text-xl font-black text-yellow-500">لوحة وساطة العالمية 🌍</h1>
+        <button onclick="location.href='index.html'" class="text-xs bg-red-500/10 text-red-500 px-4 py-1 rounded-xl">خروج</button>
     </nav>
 
     <div class="flex flex-1 overflow-hidden">
-        <!-- القائمة الجانبية للتذاكر -->
-        <aside class="w-80 bg-[#111218]/80 border-l border-white/5 p-4 overflow-y-auto">
-            <h3 class="text-[10px] text-gray-500 font-black uppercase mb-4 tracking-widest">التذاكر النشطة</h3>
-            <div id="ticketList" class="space-y-2"></div>
+        <aside class="w-80 bg-[#111218] border-l border-white/5 p-4 overflow-y-auto" id="ticketList">
+            <h3 class="text-[10px] text-gray-500 font-bold uppercase mb-4 tracking-widest px-2">التذاكر النشطة من أنحاء العالم</h3>
         </aside>
 
-        <!-- الشات الرئيسي -->
         <main class="flex-1 flex flex-col bg-[#05060b]">
-            <div id="noTicket" class="flex-1 flex flex-col items-center justify-center opacity-20">
-                <p class="font-bold">يرجى اختيار تذكرة لبدء المراقبة</p>
-            </div>
-
-            <div id="chatInterface" class="hidden flex-1 flex flex-col overflow-hidden">
-                <div class="p-4 bg-[#111218] border-b border-white/5 flex justify-between items-center">
-                    <div>
-                        <span id="activeTicketID" class="font-black text-yellow-500">#WS-16251</span>
-                        <span id="activeUser" class="text-xs text-gray-500 block">@user</span>
-                    </div>
+            <div id="chatArea" class="hidden flex-1 flex flex-col overflow-hidden">
+                <div class="p-4 bg-white/5 border-b border-white/5 flex justify-between items-center">
+                    <span id="activeUser" class="font-black text-yellow-500">@user</span>
+                    <select id="admStatus" onchange="updateTicket('status')" class="bg-black text-[10px] p-2 rounded-lg text-yellow-500 outline-none border border-white/10">
+                        <option value="جاري المراجعة">جاري المراجعة</option>
+                        <option value="انتظار التحويل">انتظار التحويل</option>
+                        <option value="تم بنجاح ✓">إغلاق بنجاح ✓</option>
+                    </select>
                 </div>
                 <div id="messageDisplay" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
-                
-                <div class="p-4 bg-[#111218] border-t border-white/5">
-                    <div class="flex gap-2 mb-3">
-                        <button onclick="quickReply('أهلاً بك، معك الوسيط فوزي لمراجعة طلبك.')" class="text-[9px] bg-white/5 px-3 py-1.5 rounded-lg border border-white/10">ترحيب</button>
-                        <button onclick="adminAction('pay')" class="text-[9px] bg-yellow-500 text-black px-3 py-1.5 rounded-lg font-bold">طلب دفع مالي 💳</button>
-                    </div>
-                    <div class="flex gap-2">
-                        <input id="adminMsg" type="text" placeholder="اكتب ردك هنا..." class="flex-1 bg-black border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-yellow-500">
-                        <button onclick="adminAction('send')" class="bg-yellow-500 text-black px-8 rounded-xl font-black">إرسال</button>
-                    </div>
+                <div class="p-4 bg-[#111218] border-t border-white/5 flex gap-2">
+                    <input id="adminMsg" type="text" placeholder="اكتب ردك هنا..." class="flex-1 bg-black border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-yellow-500">
+                    <button onclick="updateTicket('send')" class="bg-yellow-500 text-black px-8 rounded-xl font-black">إرسال</button>
+                    <button onclick="updateTicket('pay')" class="bg-yellow-500/20 text-yellow-500 px-4 rounded-xl font-black text-xs">طلب دفع 💳</button>
                 </div>
             </div>
+            <div id="noTicket" class="flex-1 flex items-center justify-center opacity-20 font-sans font-bold">يرجى اختيار تذكرة من القائمة الجانبية</div>
         </main>
     </div>
 
     <script>
-        let currentTicketUser = null;
+        const firebaseConfig = { databaseURL: "https://wasata-af6ac-default-rtdb.europe-west1.firebasedatabase.app" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        let selectedKey = null;
 
-        function loadTickets() {
-            const inbox = JSON.parse(localStorage.getItem('admin_inbox') || '[]');
+        db.ref('tickets').on('value', (snapshot) => {
             const list = document.getElementById('ticketList');
-            const users = [...new Set(inbox.map(item => item.user))];
-            
-            list.innerHTML = "";
-            users.forEach(user => {
-                const userMsgs = inbox.filter(i => i.user === user);
-                const lastMsg = userMsgs[userMsgs.length - 1];
+            list.innerHTML = '<h3 class="text-[10px] text-gray-500 font-bold uppercase mb-4 tracking-widest px-2">التذاكر النشطة من أنحاء العالم</h3>';
+            snapshot.forEach((child) => {
+                const data = child.val();
+                const key = child.key;
                 const div = document.createElement('div');
-                div.className = `ticket-item p-4 cursor-pointer ${currentTicketUser === user ? 'active' : ''}`;
-                div.onclick = () => selectTicket(user);
-                div.innerHTML = `<div class="flex justify-between font-black text-xs text-white">@${user.split('@')[0]}<span class="text-[8px] text-gray-600">${lastMsg.time}</span></div><p class="text-[10px] text-gray-500 truncate">${lastMsg.msg}</p>`;
+                div.className = `ticket-item p-4 ${selectedKey === key ? 'active' : ''}`;
+                div.onclick = () => selectUser(key, data);
+                div.innerHTML = `<div class="font-black text-xs text-white">@${data.userEmail.split('@')[0]}</div><p class="text-[10px] text-gray-500">${data.status}</p>`;
                 list.appendChild(div);
             });
-        }
+            if(selectedKey) renderMessages();
+        });
 
-        function selectTicket(user) {
-            currentTicketUser = user;
-            document.getElementById('noTicket').classList.add('hidden');
-            document.getElementById('chatInterface').classList.remove('hidden');
-            document.getElementById('activeUser').innerText = `@${user}`;
+        function selectUser(key, data) {
+            selectedKey = key;
+            document.getElementById('noTicket').style.display = 'none';
+            document.getElementById('chatArea').classList.remove('hidden');
+            document.getElementById('activeUser').innerText = "@" + data.userEmail.split('@')[0];
             renderMessages();
-            loadTickets();
         }
 
         function renderMessages() {
-            const inbox = JSON.parse(localStorage.getItem('admin_inbox') || '[]');
-            const messages = inbox.filter(i => i.user === currentTicketUser);
-            const display = document.getElementById('messageDisplay');
-            display.innerHTML = "";
-            messages.forEach(m => {
-                const div = document.createElement('div');
-                div.className = "p-3 bg-white/5 rounded-2xl max-w-[90%] border border-white/5 mr-auto";
-                div.innerHTML = `<p class="text-sm">${m.msg}</p><span class="text-[8px] text-gray-600">${m.time}</span>`;
-                display.appendChild(div);
+            db.ref('tickets/' + selectedKey + '/messages').once('value', (snap) => {
+                const display = document.getElementById('messageDisplay');
+                display.innerHTML = "";
+                snap.forEach((m) => {
+                    const msg = m.val();
+                    const div = document.createElement('div');
+                    div.className = `p-3 rounded-2xl max-w-[85%] ${msg.sender === 'admin' ? 'bg-yellow-500/10 mr-auto border border-yellow-500/10' : 'bg-white/5 ml-auto border border-white/5'}`;
+                    div.innerHTML = `<p class="text-sm">${msg.text}</p>`;
+                    display.appendChild(div);
+                });
+                display.scrollTop = display.scrollHeight;
             });
-            display.scrollTop = display.scrollHeight;
         }
 
-        function adminAction(type) {
-            const msgInput = document.getElementById('adminMsg');
-            const payload = { targetUser: currentTicketUser, msg: msgInput.value, action: type === 'pay' ? 'showPay' : 'none', time: Date.now() };
-            localStorage.setItem('admin_instruction', JSON.stringify(payload));
-            msgInput.value = "";
-            alert("تم الإرسال!");
+        function updateTicket(type) {
+            if(!selectedKey) return;
+            const ref = db.ref('tickets/' + selectedKey);
+            if(type === 'send') {
+                const txt = document.getElementById('adminMsg').value;
+                if(txt) ref.child('messages').push({ text: txt, sender: 'admin' });
+                document.getElementById('adminMsg').value = "";
+            } else if(type === 'status') {
+                ref.update({ status: document.getElementById('admStatus').value });
+            } else if(type === 'pay') {
+                ref.update({ action: 'showPay' });
+                alert("تم إرسال طلب دفع للعميل");
+            }
         }
-
-        function quickReply(txt) { document.getElementById('adminMsg').value = txt; }
-        
-        setInterval(() => { loadTickets(); if(currentTicketUser) renderMessages(); }, 1500);
-        
-        const session = JSON.parse(localStorage.getItem('wasata_session'));
-        if(!session || session.role !== 'admin') location.href = 'index.html';
     </script>
 </body>
 </html>
