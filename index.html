@@ -3,55 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <title>وساطة | Wasata Elite v9.4 - المنصة المعتمدة</title>
+    
+    <!-- Meta Tags للموثوقية عند إرسال الرابط -->
+    <meta name="title" content="🛡️ منصة وساطة - الضمان الأقوى بين الطرفين">
+    <meta name="description" content="وساطة هو الموقع الأول والأضمن لتأمين المعاملات البرمجية والمالية. نضمن حق البائع والمشتري بتشفير كامل وحماية معتمدة رسمياً.">
+    <meta property="og:title" content="🛡️ وساطة | الأفضل والأضمن بين طرفين">
+    <meta property="og:description" content="✅ معاملة آمنة: نضمن لك حقك ومالك بالكامل. موقع وساطة هو الخيار الأول لخبراء البرمجة والديسكورد.">
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- مكتبة الأشكال الهندسية المتحركة -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+
     <style>
-        body { background: #05060b; color: white; font-family: sans-serif; overflow-x: hidden; }
-        .bg-dots { position: fixed; inset: 0; z-index: -1; background-image: radial-gradient(#ffffff08 1.5px, transparent 1.5px); background-size: 25px 25px; }
-        .dropdown { display: none; position: absolute; top: 110%; left: 0; background: #111218; border: 1px solid #333; border-radius: 12px; padding: 10px; min-width: 180px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 100; }
+        body { background: #05060b; color: white; font-family: sans-serif; overflow-x: hidden; margin: 0; }
+        
+        /* حاوية الخلفية المتحركة */
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* خلف المحتوى */
+            top: 0;
+            left: 0;
+        }
+
+        .bg-dots { 
+            position: fixed; inset: 0; z-index: -2; 
+            background-image: radial-gradient(#ffffff08 1.5px, transparent 1.5px); 
+            background-size: 25px 25px; 
+        }
+
+        .dropdown { 
+            display: none; position: absolute; top: 110%; left: 0; 
+            background: #111218; border: 1px solid #333; border-radius: 12px; 
+            padding: 10px; min-width: 180px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 100; 
+        }
         .user-nav:hover .dropdown { display: block; }
+        
         .trust-badge { filter: grayscale(1) opacity(0.5); transition: 0.3s; }
         .trust-badge:hover { filter: grayscale(0) opacity(1); }
+        
+        /* تجميل الأزرار */
+        .btn-glow {
+            box-shadow: 0 0 20px rgba(234, 179, 8, 0.2);
+        }
     </style>
 </head>
 <body class="min-h-screen">
+    <!-- حاوية الجزيئات الهندسية -->
+    <div id="particles-js"></div>
     <div class="bg-dots"></div>
 
     <nav class="p-6 flex justify-between items-center bg-black/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
         <div class="text-2xl font-black text-yellow-500 tracking-tighter">🛡️ وساطة <span class="text-[10px] opacity-20 uppercase">v9.4</span></div>
         <div id="authContainer" class="relative user-nav flex gap-3">
-            <!-- سيتم استبداله بواسطة الجافاسكريبت -->
             <button onclick="location.href='login.html'" class="text-xs font-bold px-5 py-2 border border-white/10 rounded-xl hover:bg-white/5 transition">Sign Up</button>
             <button onclick="location.href='login.html'" class="text-xs font-bold px-5 py-2 bg-yellow-500 text-black rounded-xl hover:scale-105 transition">Log In</button>
         </div>
     </nav>
 
-    <main class="max-w-4xl mx-auto mt-32 text-center px-4">
+    <main class="max-w-4xl mx-auto mt-32 text-center px-4 relative z-10">
         <div class="flex justify-center gap-4 mb-6">
-            <span class="bg-green-500/10 text-green-500 text-[10px] border border-green-500/20 px-3 py-1 rounded-full">✓ معتمد من الأمن السيبراني</span>
-            <span class="bg-blue-500/10 text-blue-500 text-[10px] border border-blue-500/20 px-3 py-1 rounded-full">🔒 تشفير AES-256 بت</span>
+            <span class="bg-green-500/10 text-green-500 text-[10px] border border-green-500/20 px-3 py-1 rounded-full backdrop-blur-md">✓ معتمد من الأمن السيبراني</span>
+            <span class="bg-blue-500/10 text-blue-500 text-[10px] border border-blue-500/20 px-3 py-1 rounded-full backdrop-blur-md">🔒 تشفير AES-256 بت</span>
         </div>
 
-        <h1 class="text-7xl font-black mb-8 leading-tight animate-pulse">تأمين المعاملات <br><span class="text-yellow-500 tracking-tighter">بالذكاء البرمجي</span></h1>
+        <h1 class="text-7xl font-black mb-8 leading-tight">تأمين المعاملات <br><span class="text-yellow-500 tracking-tighter animate-pulse">بالذكاء البرمجي</span></h1>
         <p class="text-slate-500 text-xl mb-12 max-w-2xl mx-auto">نضمن لك حقك في عالم ديسكورد والبرمجيات بتشفير كامل وحماية وساطة المعتمدة من الجهات الرسمية.</p>
         
         <div id="actionButtons" class="flex flex-col md:flex-row justify-center gap-4 items-center">
-            <button onclick="checkAuth('ticket')" class="bg-yellow-500 text-black px-12 py-5 rounded-[2rem] font-black text-2xl hover:scale-105 active:scale-95 transition shadow-2xl shadow-yellow-500/30">فتح تذكرة وساطة</button>
+            <button onclick="checkAuth('ticket')" class="btn-glow bg-yellow-500 text-black px-12 py-5 rounded-[2rem] font-black text-2xl hover:scale-105 active:scale-95 transition shadow-2xl shadow-yellow-500/30">فتح تذكرة وساطة</button>
         </div>
 
-        <!-- جهات التوثيق -->
         <div class="mt-24">
             <p class="text-gray-600 text-[10px] uppercase tracking-widest mb-8">شركاء الثقة والأمان</p>
             <div class="flex flex-wrap justify-center gap-10 items-center opacity-60">
-                <span class="font-bold text-xl">SCA 🏛️</span>
-                <span class="font-bold text-xl">DISCORD 🎮</span>
-                <span class="font-bold text-xl">VISA/MC 💳</span>
-                <span class="font-bold text-xl">SAMA 🏦</span>
+                <span class="font-bold text-xl hover:text-white transition cursor-default">SCA 🏛️</span>
+                <span class="font-bold text-xl hover:text-white transition cursor-default">DISCORD 🎮</span>
+                <span class="font-bold text-xl hover:text-white transition cursor-default">VISA/MC 💳</span>
+                <span class="font-bold text-xl hover:text-white transition cursor-default">SAMA 🏦</span>
             </div>
         </div>
     </main>
 
     <script>
-        // إعداد بيانات المستخدم والجلسة
+        // إعداد الجزيئات الهندسية (Hexagons & Lines)
+        particlesJS("particles-js", {
+            "particles": {
+                "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+                "color": { "value": "#eab308" }, // لون أصفر وساطة
+                "shape": { "type": "circle" },
+                "opacity": { "value": 0.2, "random": false },
+                "size": { "value": 3, "random": true },
+                "line_linked": { 
+                    "enable": true, 
+                    "distance": 150, 
+                    "color": "#eab308", 
+                    "opacity": 0.1, 
+                    "width": 1 
+                },
+                "move": { "enable": true, "speed": 2, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" }, "resize": true },
+                "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 0.4 } } }
+            },
+            "retina_detect": true
+        });
+
         const currentUser = JSON.parse(localStorage.getItem('wasata_session'));
 
         function initUI() {
@@ -59,7 +119,6 @@
             const actionButtons = document.getElementById('actionButtons');
 
             if (currentUser) {
-                // تحديث الهيدر
                 authContainer.innerHTML = `
                     <div class="cursor-pointer bg-yellow-500 text-black px-4 py-2 rounded-xl text-xs font-black shadow-lg">
                         @${currentUser.email.split('@')[0]} ▼
@@ -69,8 +128,6 @@
                         </div>
                     </div>
                 `;
-
-                // إذا كان أدمن، أضف زر "رؤية التذاكر"
                 if (currentUser.role === 'admin') {
                     actionButtons.innerHTML += `
                         <button onclick="location.href='admin.html'" class="bg-white/5 border border-white/10 text-white px-8 py-5 rounded-full font-bold text-xl hover:bg-white/10 transition">رؤية التذاكر 📊</button>
@@ -92,10 +149,8 @@
             location.reload();
         }
 
-        // تشغيل التحديثات
         initUI();
 
-        // اختصار الأدمن السري Shift + A (يعمل كإختصار سريع)
         window.addEventListener('keydown', e => { 
             if(e.shiftKey && e.key === 'A') {
                 if(currentUser && currentUser.role === 'admin') location.href='admin.html';
