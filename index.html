@@ -2,9 +2,9 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>وساطة | Wasata Elite v9.4 - المنصة المعتمدة</title>
+    <title>وساطة | Wasata Elite v9.5 - المنصة المعتمدة</title>
     
-    <!-- Meta Tags للموثوقية عند إرسال الرابط -->
+    <!-- Meta Tags -->
     <meta name="title" content="🛡️ منصة وساطة - الضمان الأقوى بين الطرفين">
     <meta name="description" content="وساطة هو الموقع الأول والأضمن لتأمين المعاملات البرمجية والمالية. نضمن حق البائع والمشتري بتشفير كامل وحماية معتمدة رسمياً.">
     <meta property="og:title" content="🛡️ وساطة | الأفضل والأضمن بين طرفين">
@@ -12,6 +12,8 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <style>
         body { background: #05060b; color: white; font-family: sans-serif; overflow-x: hidden; margin: 0; scroll-behavior: smooth; }
@@ -19,13 +21,85 @@
         #particles-js { position: fixed; width: 100%; height: 100%; z-index: -1; top: 0; left: 0; }
         .bg-dots { position: fixed; inset: 0; z-index: -2; background-image: radial-gradient(#ffffff08 1.5px, transparent 1.5px); background-size: 25px 25px; }
 
-        .dropdown { display: none; position: absolute; top: 110%; left: 0; background: #111218; border: 1px solid #333; border-radius: 12px; padding: 10px; min-width: 180px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 100; }
+        .dropdown { display: none; position: absolute; top: 110%; left: 0; background: #111218; border: 1px solid #333; border-radius: 12px; padding: 10px; min-width: 200px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 100; }
         .user-nav:hover .dropdown { display: block; }
         
         .feature-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); transition: 0.3s; }
         .feature-card:hover { background: rgba(234, 179, 8, 0.03); border-color: rgba(234, 179, 8, 0.2); transform: translateY(-5px); }
         
         .step-num { width: 30px; height: 30px; background: #eab308; color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-bottom: 10px; }
+
+        /* Wallet Styles */
+        .wallet-card {
+            background: linear-gradient(135deg, rgba(234,179,8,0.1), rgba(234,179,8,0.02));
+            border: 1px solid rgba(234,179,8,0.2);
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+        }
+        .wallet-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(234,179,8,0.05) 0%, transparent 60%);
+            animation: walletGlow 6s ease-in-out infinite;
+        }
+        @keyframes walletGlow {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(10px, -10px); }
+        }
+
+        /* Notification Bell */
+        .notification-dot {
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .notif-item {
+            transition: 0.2s;
+            cursor: pointer;
+        }
+        .notif-item:hover {
+            background: rgba(234,179,8,0.05);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: #111218;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-content::-webkit-scrollbar { width: 3px; }
+        .modal-content::-webkit-scrollbar-thumb { background: #eab308; border-radius: 10px; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -34,10 +108,33 @@
 
     <!-- Navigation -->
     <nav class="p-6 flex justify-between items-center bg-black/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
-        <div class="text-2xl font-black text-yellow-500 tracking-tighter">🛡️ وساطة <span class="text-[10px] opacity-20 uppercase">v9.4</span></div>
-        <div id="authContainer" class="relative user-nav flex gap-3">
-            <button onclick="location.href='login.html'" class="text-xs font-bold px-5 py-2 border border-white/10 rounded-xl hover:bg-white/5 transition">Sign Up</button>
-            <button onclick="location.href='login.html'" class="text-xs font-bold px-5 py-2 bg-yellow-500 text-black rounded-xl hover:scale-105 transition">Log In</button>
+        <div class="text-2xl font-black text-yellow-500 tracking-tighter">🛡️ وساطة <span class="text-[10px] opacity-20 uppercase">v9.5</span></div>
+        <div class="flex items-center gap-4">
+            <!-- Wallet Badge -->
+            <div id="walletBadge" class="hidden cursor-pointer" onclick="openWalletModal()">
+                <div class="wallet-card px-4 py-2 rounded-xl flex items-center gap-2 text-sm relative" style="z-index: 1;">
+                    <span>💰</span>
+                    <span id="walletBalance" class="font-black text-yellow-500">0.00</span>
+                    <span class="text-[10px] text-gray-500">SAR</span>
+                </div>
+            </div>
+            <!-- Notifications Bell -->
+            <div id="notifBell" class="hidden relative cursor-pointer" onclick="toggleNotifications()">
+                <div class="bg-white/5 p-2 rounded-xl hover:bg-white/10 transition">
+                    <span class="text-xl">🔔</span>
+                    <div id="notifDot" class="notification-dot" style="display: none;"></div>
+                </div>
+                <!-- Notifications Dropdown -->
+                <div id="notifDropdown" class="dropdown" style="left: auto; right: 0; min-width: 320px; max-height: 400px; overflow-y: auto;">
+                    <div class="text-[10px] text-gray-500 font-bold uppercase mb-2 px-2">الإشعارات</div>
+                    <div id="notifList"></div>
+                    <div class="text-center mt-2 pt-2 border-t border-white/5">
+                        <button onclick="markAllNotifRead()" class="text-[10px] text-yellow-500 font-bold">تحديد الكل كمقروء</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Auth Container -->
+            <div id="authContainer" class="relative user-nav flex gap-3"></div>
         </div>
     </nav>
 
@@ -53,6 +150,23 @@
         
         <div id="actionButtons" class="flex flex-col md:flex-row justify-center gap-4 items-center">
             <button onclick="checkAuth('ticket')" class="bg-yellow-500 text-black px-12 py-5 rounded-[2rem] font-black text-2xl hover:scale-105 transition shadow-2xl shadow-yellow-500/30">فتح تذكرة وساطة</button>
+        </div>
+        
+        <!-- Wallet Section for Logged-in Users -->
+        <div id="walletSection" class="hidden mt-12 max-w-md mx-auto">
+            <div class="wallet-card p-6 rounded-[2rem] relative" style="z-index: 1;">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="text-right">
+                        <p class="text-[10px] text-gray-500 uppercase tracking-wider">محفظة وساطة</p>
+                        <p class="text-3xl font-black text-yellow-500 mt-1"><span id="walletBalanceHero">0.00</span> <span class="text-sm text-gray-500">SAR</span></p>
+                    </div>
+                    <div class="text-3xl">💳</div>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="openDepositModal()" class="flex-1 bg-yellow-500/20 text-yellow-500 py-2 rounded-xl font-bold text-xs hover:bg-yellow-500/30 transition">إيداع</button>
+                    <button onclick="openWithdrawModal()" class="flex-1 bg-white/5 py-2 rounded-xl font-bold text-xs hover:bg-white/10 transition">سحب</button>
+                </div>
+            </div>
         </div>
 
         <!-- شعارات الشركاء -->
@@ -90,7 +204,6 @@
                     </div>
                 </div>
             </div>
-            <!-- الصورة الاحترافية -->
             <div class="relative">
                 <img src="wsath.png" alt="Wasata Security" class="w-full h-auto drop-shadow-[0_0_50px_rgba(234,179,8,0.2)] rounded-3xl">
             </div>
@@ -138,49 +251,8 @@
         </footer>
     </main>
 
-    <script>
-        // Particles Config
-        particlesJS("particles-js", {
-            "particles": {
-                "number": { "value": 80 },
-                "color": { "value": "#eab308" },
-                "shape": { "type": "circle" },
-                "opacity": { "value": 0.2 },
-                "size": { "value": 2 },
-                "line_linked": { "enable": true, "distance": 150, "color": "#eab308", "opacity": 0.1, "width": 1 },
-                "move": { "enable": true, "speed": 1 }
-            },
-            "interactivity": { "events": { "onhover": { "enable": true, "mode": "grab" } } }
-        });
-
-        const currentUser = JSON.parse(localStorage.getItem('wasata_session'));
-
-        function initUI() {
-            const authContainer = document.getElementById('authContainer');
-            const actionButtons = document.getElementById('actionButtons');
-            if (currentUser) {
-                authContainer.innerHTML = `
-                    <div class="cursor-pointer bg-yellow-500 text-black px-4 py-2 rounded-xl text-xs font-black shadow-lg">
-                        @${currentUser.email.split('@')[0]} ▼
-                        <div class="dropdown text-right">
-                            ${currentUser.role === 'admin' ? '<button onclick="location.href=\'admin.html\'" class="text-yellow-400 font-bold block w-full py-2 border-b border-white/5">لوحة التحكم ⚙️</button>' : ''}
-                            <button onclick="logout()" class="text-red-500 font-bold block w-full py-2">تسجيل الخروج</button>
-                        </div>
-                    </div>
-                `;
-                if (currentUser.role === 'admin') {
-                    actionButtons.innerHTML += `<button onclick="location.href='admin.html'" class="bg-white/5 border border-white/10 text-white px-8 py-5 rounded-full font-bold text-xl hover:bg-white/10 transition">رؤية التذاكر 📊</button>`;
-                }
-            }
-        }
-
-        function checkAuth(type) {
-            if (currentUser) location.href = type === 'admin' ? 'admin.html' : 'ticket.html';
-            else location.href = 'login.html';
-        }
-
-        function logout() { localStorage.removeItem('wasata_session'); location.reload(); }
-        initUI();
-    </script>
-</body>
-</html>
+    <!-- Wallet Modal -->
+    <div id="walletModal" class="modal-overlay" onclick="closeModal(event, 'walletModal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-black text-yellow-500">
