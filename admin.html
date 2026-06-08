@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>لوحة التحكم | Wasata Admin</title>
+    <title>لوحة التحكم | Wasata Admin v9.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -10,40 +10,268 @@
         body { background: #0a0b10; color: white; font-family: sans-serif; overflow: hidden; height: 100vh; }
         .ticket-item { transition: 0.2s; background: rgba(255,255,255,0.02); margin-bottom: 8px; border-radius: 12px; cursor: pointer; border-right: 4px solid transparent; }
         .ticket-item.active { background: #1a1d2e; border-right-color: #eab308; }
+        .ticket-item.pending { border-right-color: #eab308; }
+        .ticket-item.completed { border-right-color: #22c55e; }
+        .ticket-item.refunded { border-right-color: #ef4444; }
         ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #333; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+
+        .admin-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: 0.3s;
+        }
+        .admin-card:hover {
+            border-color: rgba(234,179,8,0.2);
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: #111218;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 30px;
+            max-width: 550px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .stat-box {
+            transition: 0.3s;
+        }
+        .stat-box:hover {
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body class="flex flex-col">
     <nav class="bg-[#111218] p-4 border-b border-white/5 flex justify-between items-center shadow-2xl">
-        <h1 class="text-xl font-black text-yellow-500">لوحة وساطة العالمية 🌍</h1>
-        <button onclick="location.href='index.html'" class="text-xs bg-red-500/10 text-red-500 px-4 py-1 rounded-xl">خروج</button>
+        <div class="flex items-center gap-4">
+            <h1 class="text-xl font-black text-yellow-500">⚙️ وساطة الإدارية <span class="text-[10px] opacity-30">v9.5</span></h1>
+            <span class="text-[10px] bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded-full">مرحباً أيها الوسيط</span>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="openSettings()" class="text-xs bg-white/5 text-white px-3 py-1.5 rounded-xl hover:bg-white/10 transition">⚙️ الإعدادات</button>
+            <button onclick="location.href='index.html'" class="text-xs bg-red-500/10 text-red-500 px-3 py-1.5 rounded-xl hover:bg-red-500/20 transition">خروج</button>
+        </div>
     </nav>
 
+    <!-- Stats Bar -->
+    <div class="bg-[#111218]/50 px-4 py-2 border-b border-white/5">
+        <div class="flex gap-3 text-[10px]">
+            <div class="stat-box bg-yellow-500/10 px-3 py-1.5 rounded-lg">
+                <span class="text-gray-400">التذاكر النشطة: </span>
+                <span id="activeTicketsCount" class="font-bold text-yellow-500">0</span>
+            </div>
+            <div class="stat-box bg-green-500/10 px-3 py-1.5 rounded-lg">
+                <span class="text-gray-400">المكتملة: </span>
+                <span id="completedTicketsCount" class="font-bold text-green-500">0</span>
+            </div>
+            <div class="stat-box bg-blue-500/10 px-3 py-1.5 rounded-lg">
+                <span class="text-gray-400">إجمالي رسوم الوساطة: </span>
+                <span id="totalFees" class="font-bold text-blue-500">0 SAR</span>
+            </div>
+        </div>
+    </div>
+
     <div class="flex flex-1 overflow-hidden">
-        <aside class="w-80 bg-[#111218] border-l border-white/5 p-4 overflow-y-auto" id="ticketList">
-            <h3 class="text-[10px] text-gray-500 font-bold uppercase mb-4 px-2">التذاكر النشطة</h3>
+        <!-- Sidebar - Ticket List -->
+        <aside class="w-80 bg-[#111218] border-l border-white/5 flex flex-col">
+            <div class="p-3 border-b border-white/5">
+                <input type="text" id="searchTickets" placeholder="🔍 بحث عن تذكرة..." class="w-full bg-black/50 border border-white/5 rounded-xl px-3 py-2 text-xs outline-none focus:border-yellow-500/30">
+            </div>
+            <div class="flex-1 overflow-y-auto p-3" id="ticketList">
+                <h3 class="text-[10px] text-gray-500 font-bold uppercase mb-3 px-2">التذاكر النشطة</h3>
+            </div>
         </aside>
 
+        <!-- Main Area -->
         <main class="flex-1 flex flex-col bg-[#05060b]">
             <div id="chatArea" class="hidden flex-1 flex flex-col overflow-hidden">
+                <!-- Ticket Info Header -->
                 <div class="p-4 bg-white/5 border-b border-white/5 flex justify-between items-center">
-                    <span id="activeUser" class="font-black text-yellow-500 font-mono">@user</span>
-                    <select id="admStatus" onchange="updateTicket('status')" class="bg-black text-[10px] p-2 rounded-lg text-yellow-500 border border-white/10">
-                        <option value="جاري المراجعة">جاري المراجعة</option>
-                        <option value="انتظار التحويل">انتظار التحويل</option>
-                        <option value="تم بنجاح ✓">إغلاق بنجاح</option>
-                    </select>
+                    <div>
+                        <span id="activeUser" class="font-black text-yellow-500 font-mono">@user</span>
+                        <span id="ticketInfoSmall" class="text-[10px] text-gray-500 block mt-0.5">المنتج: — | المبلغ: — | رسوم الوساطة: —</span>
+                    </div>
+                    <div class="flex gap-2 items-center">
+                        <select id="admStatus" onchange="updateTicket('status')" class="bg-black text-[10px] p-2 rounded-lg text-yellow-500 border border-white/10">
+                            <option value="بانتظار الوسيط">بانتظار الوسيط</option>
+                            <option value="جاري المراجعة">جاري المراجعة</option>
+                            <option value="انتظار الدفع">انتظار الدفع</option>
+                            <option value="تم الدفع">تم الدفع ✓</option>
+                            <option value="قيد التسليم">قيد التسليم</option>
+                            <option value="تم بنجاح ✓">إغلاق بنجاح ✓</option>
+                        </select>
+                    </div>
                 </div>
+                
+                <!-- Messages Display -->
                 <div id="messageDisplay" class="flex-1 overflow-y-auto p-6 flex flex-col gap-3"></div>
+                
+                <!-- Action Buttons Bar -->
+                <div id="actionBar" class="px-4 py-2 bg-[#111218]/80 border-t border-white/5 flex gap-2 flex-wrap">
+                    <button onclick="updateTicket('pay')" class="bg-yellow-500/20 text-yellow-500 px-3 py-1.5 rounded-xl font-bold text-[10px] hover:bg-yellow-500/30 transition">💳 طلب دفع</button>
+                    <button onclick="openRefundModal()" class="bg-red-500/20 text-red-500 px-3 py-1.5 rounded-xl font-bold text-[10px] hover:bg-red-500/30 transition">↩️ إعادة مبلغ</button>
+                    <button onclick="updateTicket('complete')" class="bg-green-500/20 text-green-500 px-3 py-1.5 rounded-xl font-bold text-[10px] hover:bg-green-500/30 transition">✅ إتمام المعاملة</button>
+                    <button onclick="openEditTicketModal()" class="bg-blue-500/20 text-blue-500 px-3 py-1.5 rounded-xl font-bold text-[10px] hover:bg-blue-500/30 transition">✏️ تعديل التذكرة</button>
+                </div>
+                
+                <!-- Chat Input -->
                 <div class="p-4 bg-[#111218] border-t border-white/5 flex gap-2">
-                    <input id="adminMsg" type="text" placeholder="اكتب ردك..." class="flex-1 bg-black border border-white/10 rounded-xl px-4 py-3 outline-none">
-                    <button onclick="updateTicket('send')" class="bg-yellow-500 text-black px-6 rounded-xl font-black">إرسال</button>
-                    <button onclick="updateTicket('pay')" class="bg-yellow-500/20 text-yellow-500 px-4 rounded-xl font-black text-xs">طلب دفع</button>
+                    <input id="adminMsg" type="text" placeholder="اكتب ردك..." class="flex-1 bg-black border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-yellow-500/30">
+                    <button onclick="updateTicket('send')" class="bg-yellow-500 text-black px-6 rounded-xl font-black text-sm hover:bg-yellow-400 transition">إرسال</button>
                 </div>
             </div>
-            <div id="noTicket" class="flex-1 flex items-center justify-center opacity-20 font-bold">يرجى اختيار تذكرة من القائمة</div>
+            
+            <div id="noTicket" class="flex-1 flex items-center justify-center">
+                <div class="text-center opacity-30">
+                    <div class="text-5xl mb-4">📋</div>
+                    <div class="font-bold">يرجى اختيار تذكرة من القائمة</div>
+                    <div class="text-xs text-gray-500 mt-2">أو أنشئ تذكرة جديدة من الموقع الرئيسي</div>
+                </div>
+            </div>
         </main>
+    </div>
+
+    <!-- Refund Modal -->
+    <div id="refundModal" class="modal-overlay" onclick="closeModal(event, 'refundModal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-black text-red-500">↩️ إعادة المبلغ للعميل</h3>
+                <button onclick="closeModal(event, 'refundModal')" class="text-gray-500 hover:text-white text-xl">✕</button>
+            </div>
+            <div class="space-y-4">
+                <div class="bg-red-500/10 p-4 rounded-xl border border-red-500/20">
+                    <p class="text-xs text-gray-400">سيتم إعادة المبلغ إلى محفظة العميل مباشرة</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 mb-2">المبلغ المراد إعادته (SAR)</p>
+                    <input type="number" id="refundAmount" class="w-full bg-black border border-white/10 rounded-xl p-4 text-2xl font-black outline-none text-yellow-500">
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 mb-2">سبب الإعادة (لن يظهر للعميل)</p>
+                    <textarea id="refundReason" rows="2" placeholder="سبب الإعادة..." class="w-full bg-black border border-white/10 rounded-xl p-4 text-sm outline-none"></textarea>
+                </div>
+                <button onclick="processRefund()" class="w-full bg-red-500 text-white py-4 rounded-xl font-black text-lg hover:bg-red-600 transition">تأكيد إعادة المبلغ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Ticket Modal -->
+    <div id="editTicketModal" class="modal-overlay" onclick="closeModal(event, 'editTicketModal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-black text-yellow-500">✏️ تعديل تفاصيل التذكرة</h3>
+                <button onclick="closeModal(event, 'editTicketModal')" class="text-gray-500 hover:text-white text-xl">✕</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <p class="text-xs text-gray-500 mb-2">اسم المنتج / الخدمة</p>
+                    <input type="text" id="editProduct" placeholder="مثال: سورس ديسكورد بوت" class="w-full bg-black border border-white/10 rounded-xl p-4 outline-none">
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 mb-2">مبلغ المعاملة (SAR)</p>
+                    <input type="number" id="editAmount" class="w-full bg-black border border-white/10 rounded-xl p-4 text-lg font-black outline-none text-yellow-500">
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 mb-2">رسوم الوساطة (MiddleMan Fee) - SAR</p>
+                    <input type="number" id="editFee" value="15" class="w-full bg-black border border-white/10 rounded-xl p-4 text-lg font-black outline-none text-yellow-500">
+                    <p class="text-[10px] text-gray-600 mt-1">💡 هذه الرسوم تُخصم من المبلغ الإجمالي وتذهب للمنصة</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 mb-2">المبلغ المستحق للبائع بعد خصم الوساطة</p>
+                    <div id="calcSellerAmount" class="bg-yellow-500/5 p-3 rounded-xl text-center text-lg font-black text-yellow-500">0.00 SAR</div>
+                </div>
+                <button onclick="saveTicketEdits()" class="w-full bg-yellow-500 text-black py-4 rounded-xl font-black text-lg hover:bg-yellow-400 transition">حفظ التعديلات</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal-overlay" onclick="closeModal(event, 'settingsModal')">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 600px;">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-black text-yellow-500">⚙️ إعدادات المنصة</h3>
+                <button onclick="closeModal(event, 'settingsModal')" class="text-gray-500 hover:text-white text-xl">✕</button>
+            </div>
+            <div class="space-y-6">
+                <!-- Default Fees -->
+                <div class="admin-card p-4 rounded-2xl">
+                    <h4 class="font-bold text-sm mb-4">💰 رسوم الوساطة الافتراضية</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-[10px] text-gray-500 mb-1">نسبة الوساطة (%)</p>
+                            <input type="number" id="settingsFeePercent" value="2.5" step="0.1" class="w-full bg-black border border-white/10 rounded-xl p-3 outline-none text-yellow-500 font-bold">
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-gray-500 mb-1">الحد الأدنى لرسوم الوساطة (SAR)</p>
+                            <input type="number" id="settingsFeeMin" value="10" class="w-full bg-black border border-white/10 rounded-xl p-3 outline-none text-yellow-500 font-bold">
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-gray-500 mb-1">الحد الأقصى لرسوم الوساطة (SAR)</p>
+                            <input type="number" id="settingsFeeMax" value="500" class="w-full bg-black border border-white/10 rounded-xl p-3 outline-none text-yellow-500 font-bold">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Platform Config -->
+                <div class="admin-card p-4 rounded-2xl">
+                    <h4 class="font-bold text-sm mb-4">🏛️ إعدادات المنصة</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-[10px] text-gray-500 mb-1">الحد الأدنى للمعاملة (SAR)</p>
+                            <input type="number" id="settingsMinTx" value="50" class="w-full bg-black border border-white/10 rounded-xl p-3 outline-none text-yellow-500 font-bold">
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-gray-500 mb-1">الحد الأقصى للمعاملة (SAR)</p>
+                            <input type="number" id="settingsMaxTx" value="50000" class="w-full bg-black border border-white/10 rounded-xl p-3 outline-none text-yellow-500 font-bold">
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-gray-500 mb-1">وقت انتهاء التذكرة (ساعات)</p>
+                            <input type="number" id="settingsExpiry" value="72" class="w-full bg-black border border-white/10 rounded-xl p-3 outline-none text-yellow-500 font-bold">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                <div class="admin-card p-4 rounded-2xl">
+                    <h4 class="font-bold text-sm mb-4">📊 إحصائيات المنصة</h4>
+                    <div class="grid grid-cols-2 gap-3 text-xs">
+                        <div class="bg-white/5 p-3 rounded-xl">
+                            <p class="text-gray-500">إجمالي المستخدمين</p>
+                            <p id="statUsers" class="text-lg font-black text-yellow-500">0</p>
+                        </div>
+                        <div class="bg-white/5 p-3 rounded-xl">
+                            <p class="text-gray-500">إجمالي المعاملات</p>
+                            <p id="statTx" class="text-lg font-black text-yellow-500">0</p>
+                        </div>
+                        <div class="bg-white/5 p-3 rounded-xl">
+                            <p class="text-gray-500">إجمالي رسوم الوساطة</p>
+                            <p id="statTotalFees" class="text-lg font-black text-green-500">0 SAR</p>
+                        </div>
+                        <div class="bg-white/5 p-3 rounded-xl">
+                            <p class="text-gray-500">المبالغ المسترجعة</p>
+                            <p id="statRefunded" class="text-lg font-black text-red-500">0 SAR</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="saveSettings()" class="w-full bg-yellow-500 text-black py-4 rounded-xl font-black text-lg hover:bg-yellow-400 transition">💾 حفظ الإعدادات</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -51,56 +279,398 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         let selectedKey = null;
+        let selectedData = null;
+        let adminUser = JSON.parse(localStorage.getItem('wasata_session'));
 
-        // سحب قائمة التذاكر بشكل دائم
+        // ========== TICKET LIST ==========
+
         db.ref('tickets').on('value', (snapshot) => {
             const list = document.getElementById('ticketList');
-            list.innerHTML = '<h3 class="text-[10px] text-gray-500 font-bold uppercase mb-4 px-2">التذاكر النشطة</h3>';
+            list.innerHTML = '<h3 class="text-[10px] text-gray-500 font-bold uppercase mb-3 px-2">التذاكر النشطة</h3>';
+            
+            let activeCount = 0;
+            let completedCount = 0;
+            let totalFees = 0;
+            
             snapshot.forEach((child) => {
                 const data = child.val();
                 const key = child.key;
+                
+                if (data.status && data.status.includes('تم بنجاح')) {
+                    completedCount++;
+                } else {
+                    activeCount++;
+                }
+                
+                if (data.fee) totalFees += data.fee;
+                
                 const div = document.createElement('div');
-                div.className = `ticket-item p-4 ${selectedKey === key ? 'active' : ''}`;
+                const statusClass = data.status && data.status.includes('تم بنجاح') ? 'completed' : 
+                                   data.status && data.status.includes('ملغي') ? 'refunded' : 'pending';
+                div.className = `ticket-item p-4 ${statusClass} ${selectedKey === key ? 'active' : ''}`;
                 div.onclick = () => selectUser(key, data);
-                div.innerHTML = `<div class="font-black text-xs text-white">@${data.userEmail.split('@')[0]}</div><p class="text-[10px] text-gray-500">${data.status}</p>`;
+                
+                const feeBadge = data.fee ? `<span class="text-[9px] text-yellow-500">رسوم: ${data.fee} SAR</span>` : '';
+                
+                div.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div class="font-black text-xs text-white">@${data.userEmail ? data.userEmail.split('@')[0] : 'مجهول'}</div>
+                        <span class="text-[9px] px-1.5 py-0.5 rounded-full ${
+                            data.status && data.status.includes('تم بنجاح') ? 'bg-green-500/10 text-green-500' :
+                            data.status && data.status.includes('ملغي') ? 'bg-red-500/10 text-red-500' :
+                            'bg-yellow-500/10 text-yellow-500'
+                        }">${data.status || 'جديد'}</span>
+                    </div>
+                    <p class="text-[10px] text-gray-500 mt-1">${data.product || '—'} · ${data.amount || '—'} SAR</p>
+                    <div class="flex gap-2 mt-1">${feeBadge}</div>
+                `;
                 list.appendChild(div);
             });
+            
+            document.getElementById('activeTicketsCount').innerText = activeCount;
+            document.getElementById('completedTicketsCount').innerText = completedCount;
+            document.getElementById('totalFees').innerText = totalFees.toFixed(2) + ' SAR';
         });
+
+        // ========== SELECT TICKET ==========
 
         function selectUser(key, data) {
             selectedKey = key;
+            selectedData = data;
+            
             document.getElementById('noTicket').style.display = 'none';
             document.getElementById('chatArea').classList.remove('hidden');
-            document.getElementById('activeUser').innerText = "@" + data.userEmail.split('@')[0];
             
-            // مراقبة الرسائل للتذكرة المختارة
+            const email = data.userEmail || 'مجهول';
+            document.getElementById('activeUser').innerText = "@" + email.split('@')[0];
+            
+            const infoEl = document.getElementById('ticketInfoSmall');
+            infoEl.innerHTML = `المنتج: ${data.product || '—'} | المبلغ: ${data.amount || '—'} SAR | رسوم الوساطة: ${data.fee || '—'} SAR`;
+            
+            document.getElementById('admStatus').value = data.status || 'بانتظار الوسيط';
+            
+            // Watch messages
+            db.ref('tickets/' + selectedKey + '/messages').off();
             db.ref('tickets/' + selectedKey + '/messages').on('value', (snap) => {
                 const display = document.getElementById('messageDisplay');
                 display.innerHTML = "";
                 snap.forEach((m) => {
                     const msg = m.val();
                     const div = document.createElement('div');
-                    div.className = `p-3 rounded-2xl max-w-[85%] ${msg.sender === 'admin' ? 'bg-yellow-500/10 mr-auto' : 'bg-white/5 ml-auto'}`;
-                    div.innerHTML = `<p class="text-sm">${msg.text}</p>`;
+                    div.className = `p-3 rounded-2xl max-w-[85%] ${msg.sender === 'admin' ? 'bg-yellow-500/10 mr-auto border border-yellow-500/20' : 'bg-white/5 ml-auto'}`;
+                    div.innerHTML = `
+                        ${msg.sender === 'admin' ? '<span class="text-[9px] font-black text-yellow-500 block mb-1">🛡️ وساطة</span>' : ''}
+                        <p class="text-sm">${msg.text}</p>
+                        <span class="text-[9px] text-gray-600 block mt-1">${msg.time || ''}</span>
+                    `;
                     display.appendChild(div);
                 });
                 display.scrollTop = display.scrollHeight;
             });
         }
 
+        // ========== TICKET ACTIONS ==========
+
         function updateTicket(type) {
             if(!selectedKey) return;
             const ref = db.ref('tickets/' + selectedKey);
+            
             if(type === 'send') {
                 const txt = document.getElementById('adminMsg').value;
-                if(txt) ref.child('messages').push({ text: txt, sender: 'admin', time: new Date().toLocaleTimeString() });
+                if(txt) {
+                    ref.child('messages').push({ 
+                        text: txt, 
+                        sender: 'admin', 
+                        time: new Date().toLocaleTimeString('ar-SA')
+                    });
+                }
                 document.getElementById('adminMsg').value = "";
+                
             } else if(type === 'status') {
-                ref.update({ status: document.getElementById('admStatus').value });
+                const newStatus = document.getElementById('admStatus').value;
+                ref.update({ status: newStatus });
+                
+                // Add system message
+                ref.child('messages').push({
+                    text: '📌 تغيرت حالة التذكرة إلى: ' + newStatus,
+                    sender: 'system',
+                    time: new Date().toLocaleTimeString('ar-SA')
+                });
+                
             } else if(type === 'pay') {
                 ref.update({ action: 'showPay' });
-                alert("تم إرسال طلب الدفع");
+                ref.child('messages').push({
+                    text: '💳 تم إرسال طلب الدفع. يرجى تحويل المبلغ.',
+                    sender: 'admin',
+                    time: new Date().toLocaleTimeString('ar-SA')
+                });
+                
+                // Notify user
+                const uKey = selectedData.userEmail.replace(/\./g, '_');
+                db.ref('notifications/' + uKey).push({
+                    text: '💳 طلب دفع جديد للتذكرة - المبلغ: ' + (selectedData.amount || '?') + ' SAR',
+                    type: 'payment',
+                    ticketKey: selectedKey,
+                    read: false,
+                    timestamp: Date.now()
+                });
+                
+            } else if(type === 'complete') {
+                // Complete the transaction: release funds to seller
+                if (!selectedData.amount || !selectedData.userEmail) {
+                    alert('❌ بيانات التذكرة غير مكتملة');
+                    return;
+                }
+                
+                const amount = parseFloat(selectedData.amount) || 0;
+                const fee = parseFloat(selectedData.fee) || 0;
+                const sellerAmount = amount - fee;
+                
+                // Add to seller's wallet if we know who the seller is
+                // For now, we complete the status
+                ref.update({ 
+                    status: 'تم بنجاح ✓',
+                    completedAt: Date.now(),
+                    sellerPayout: sellerAmount,
+                    platformFee: fee
+                });
+                
+                ref.child('messages').push({
+                    text: '✅ تم إتمام المعاملة بنجاح! المبلغ المحول للبائع: ' + sellerAmount.toFixed(2) + ' SAR (بعد خصم رسوم الوساطة: ' + fee.toFixed(2) + ' SAR)',
+                    sender: 'system',
+                    time: new Date().toLocaleTimeString('ar-SA')
+                });
+                
+                // Notify user
+                const uKey = selectedData.userEmail.replace(/\./g, '_');
+                db.ref('notifications/' + uKey).push({
+                    text: '✅ تم إتمام معاملتك بنجاح! شكراً لاستخدام وساطة.',
+                    type: 'complete',
+                    ticketKey: selectedKey,
+                    read: false,
+                    timestamp: Date.now()
+                });
+                
+                document.getElementById('admStatus').value = 'تم بنجاح ✓';
+                
+            } else if(type === 'deliver') {
+                ref.update({ status: 'قيد التسليم' });
+                ref.child('messages').push({
+                    text: '📦 يرجى تسليم المنتج/الخدمة للعميل.',
+                    sender: 'admin',
+                    time: new Date().toLocaleTimeString('ar-SA')
+                });
             }
+        }
+
+        // ========== REFUND FUNCTION ==========
+
+        function openRefundModal() {
+            if (!selectedData) { alert('الرجاء اختيار تذكرة أولاً'); return; }
+            document.getElementById('refundAmount').value = selectedData.amount || 0;
+            document.getElementById('refundModal').classList.add('active');
+        }
+
+        function processRefund() {
+            if (!selectedKey || !selectedData) { alert('❌ لم يتم اختيار تذكرة'); return; }
+            
+            const amount = parseFloat(document.getElementById('refundAmount').value);
+            const reason = document.getElementById('refundReason').value || 'لم يتم تحديد سبب';
+            
+            if (!amount || amount <= 0) { alert('❌ المبلغ غير صحيح'); return; }
+            
+            const userEmail = selectedData.userEmail;
+            if (!userEmail) { alert('❌ لا يوجد بريد إلكتروني للعميل'); return; }
+            
+            const uKey = userEmail.replace(/\./g, '_');
+            
+            // 1. Add amount to user's wallet
+            db.ref('wallets/' + uKey).transaction((current) => {
+                const newBalance = (current?.balance || 0) + amount;
+                return { balance: newBalance };
+            });
+            
+            // 2. Add transaction record for wallet
+            db.ref('transactions/' + uKey).push({
+                type: 'refund',
+                amount: amount,
+                status: 'completed',
+                timestamp: Date.now(),
+                txId: 'REF-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4).toUpperCase(),
+                note: 'استرجاع مبلغ من تذكرة وساطة',
+                ticketKey: selectedKey
+            });
+            
+            // 3. Update ticket status
+            db.ref('tickets/' + selectedKey).update({
+                status: 'ملغي - تم الاسترجاع',
+                refundedAmount: amount,
+                refundReason: reason,
+                refundedAt: Date.now()
+            });
+            
+            // 4. Send notification to user with ticket link
+            db.ref('notifications/' + uKey).push({
+                text: '✅ تم إعادة ' + amount.toFixed(2) + ' SAR إلى محفظتك (التذكرة ملغاة)',
+                type: 'refund',
+                ticketKey: selectedKey,
+                read: false,
+                timestamp: Date.now()
+            });
+            
+            // 5. Send message in ticket
+            db.ref('tickets/' + selectedKey + '/messages').push({
+                text: '↩️ تم إعادة المبلغ (' + amount.toFixed(2) + ' SAR) إلى محفظة العميل. سبب الإلغاء: ' + reason,
+                sender: 'system',
+                time: new Date().toLocaleTimeString('ar-SA')
+            });
+            
+            alert('✅ تم إعادة ' + amount.toFixed(2) + ' SAR إلى محفظة ' + userEmail);
+            document.getElementById('refundModal').classList.remove('active');
+        }
+
+        // ========== EDIT TICKET ==========
+
+        function openEditTicketModal() {
+            if (!selectedData) { alert('الرجاء اختيار تذكرة أولاً'); return; }
+            
+            document.getElementById('editProduct').value = selectedData.product || '';
+            document.getElementById('editAmount').value = selectedData.amount || '';
+            document.getElementById('editFee').value = selectedData.fee || 15;
+            
+            calculateSellerAmount();
+            document.getElementById('editTicketModal').classList.add('active');
+        }
+
+        // Calculate seller amount in real-time
+        document.addEventListener('input', function(e) {
+            if (e.target.id === 'editAmount' || e.target.id === 'editFee') {
+                calculateSellerAmount();
+            }
+        });
+
+        function calculateSellerAmount() {
+            const amount = parseFloat(document.getElementById('editAmount').value) || 0;
+            const fee = parseFloat(document.getElementById('editFee').value) || 0;
+            const sellerAmount = Math.max(0, amount - fee);
+            document.getElementById('calcSellerAmount').innerText = sellerAmount.toFixed(2) + ' SAR';
+        }
+
+        function saveTicketEdits() {
+            if (!selectedKey) { alert('❌ لم يتم اختيار تذكرة'); return; }
+            
+            const product = document.getElementById('editProduct').value;
+            const amount = parseFloat(document.getElementById('editAmount').value);
+            const fee = parseFloat(document.getElementById('editFee').value);
+            
+            if (!product || !amount || amount <= 0) { alert('❌ البيانات غير مكتملة'); return; }
+            
+            const updates = {
+                product: product,
+                amount: amount,
+                fee: fee || 0
+            };
+            
+            db.ref('tickets/' + selectedKey).update(updates);
+            
+            // System message
+            db.ref('tickets/' + selectedKey + '/messages').push({
+                text: '📝 تم تحديث التذكرة: المنتج: ' + product + ' | المبلغ: ' + amount + ' SAR | رسوم الوساطة: ' + (fee || 0) + ' SAR',
+                sender: 'system',
+                time: new Date().toLocaleTimeString('ar-SA')
+            });
+            
+            // Notify user
+            if (selectedData && selectedData.userEmail) {
+                const uKey = selectedData.userEmail.replace(/\./g, '_');
+                db.ref('notifications/' + uKey).push({
+                    text: '📝 تم تحديث تفاصيل تذكرتك من قبل الوسيط',
+                    type: 'update',
+                    ticketKey: selectedKey,
+                    read: false,
+                    timestamp: Date.now()
+                });
+            }
+            
+            alert('✅ تم حفظ التعديلات');
+            document.getElementById('editTicketModal').classList.remove('active');
+        }
+
+        // ========== SETTINGS ==========
+
+        function openSettings() {
+            // Load current settings
+            db.ref('platformSettings').once('value', (snap) => {
+                const settings = snap.val() || {};
+                document.getElementById('settingsFeePercent').value = settings.feePercent || 2.5;
+                document.getElementById('settingsFeeMin').value = settings.feeMin || 10;
+                document.getElementById('settingsFeeMax').value = settings.feeMax || 500;
+                document.getElementById('settingsMinTx').value = settings.minTransaction || 50;
+                document.getElementById('settingsMaxTx').value = settings.maxTransaction || 50000;
+                document.getElementById('settingsExpiry').value = settings.expiryHours || 72;
+            });
+            
+            // Load stats
+            loadPlatformStats();
+            
+            document.getElementById('settingsModal').classList.add('active');
+        }
+
+        function loadPlatformStats() {
+            // Count users
+            db.ref('wallets').once('value', (snap) => {
+                let count = 0;
+                snap.forEach(() => count++);
+                document.getElementById('statUsers').innerText = count;
+            });
+            
+            // Count transactions
+            let totalTx = 0;
+            let totalFees = 0;
+            let totalRefunded = 0;
+            
+            db.ref('tickets').once('value', (snap) => {
+                snap.forEach((child) => {
+                    const data = child.val();
+                    totalTx++;
+                    if (data.fee) totalFees += data.fee;
+                    if (data.refundedAmount) totalRefunded += data.refundedAmount;
+                });
+                document.getElementById('statTx').innerText = totalTx;
+                document.getElementById('statTotalFees').innerText = totalFees.toFixed(2) + ' SAR';
+                document.getElementById('statRefunded').innerText = totalRefunded.toFixed(2) + ' SAR';
+            });
+        }
+
+        function saveSettings() {
+            const settings = {
+                feePercent: parseFloat(document.getElementById('settingsFeePercent').value) || 2.5,
+                feeMin: parseFloat(document.getElementById('settingsFeeMin').value) || 10,
+                feeMax: parseFloat(document.getElementById('settingsFeeMax').value) || 500,
+                minTransaction: parseFloat(document.getElementById('settingsMinTx').value) || 50,
+                maxTransaction: parseFloat(document.getElementById('settingsMaxTx').value) || 50000,
+                expiryHours: parseFloat(document.getElementById('settingsExpiry').value) || 72,
+                updatedAt: Date.now(),
+                updatedBy: adminUser ? adminUser.email : 'admin'
+            };
+            
+            db.ref('platformSettings').set(settings);
+            alert('✅ تم حفظ إعدادات المنصة');
+        }
+
+        // ========== HELPERS ==========
+
+        function closeModal(event, modalId) {
+            const modal = document.getElementById(modalId);
+            if (event.target === modal || event.target.classList.contains('modal-overlay')) {
+                modal.classList.remove('active');
+            }
+        }
+
+        // ========== CHECK ADMIN ==========
+        if (!adminUser || adminUser.role !== 'admin') {
+            alert('❌ غير مصرح لك بالدخول. يجب أن تكون أدمن.');
+            location.href = 'index.html';
         }
     </script>
 </body>
