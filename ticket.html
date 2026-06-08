@@ -2,73 +2,71 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>تذكرة وساطة | Wasata Elite v10</title>
+    <title>وساطة v10 | التذكرة الرسمية</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         body { background: #05060b; color: white; font-family: sans-serif; overflow: hidden; }
-        .message { margin-bottom: 12px; padding: 12px 16px; border-radius: 20px; max-width: 80%; line-height: 1.6; }
+        .message { margin-bottom: 15px; padding: 14px; border-radius: 20px; max-width: 85%; }
         .msg-admin { background: #1a1d2e; align-self: flex-start; border-right: 4px solid #eab308; }
         .msg-user { background: #eab308; color: black; align-self: flex-end; font-weight: bold; }
-        .msg-system { background: rgba(255,255,255,0.03); align-self: center; font-size: 11px; color: #777; border: 1px dashed rgba(255,255,255,0.1); }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        .msg-system { background: rgba(255,255,255,0.02); align-self: center; font-size: 10px; color: #555; border: 1px dashed rgba(255,255,255,0.05); }
     </style>
 </head>
 <body class="flex flex-col h-screen">
-    <nav class="p-4 flex justify-between items-center bg-black/40 border-b border-white/5 backdrop-blur-md">
+    <!-- Navbar -->
+    <nav class="p-4 flex justify-between items-center bg-black/40 border-b border-white/5 backdrop-blur-lg">
         <div class="flex items-center gap-3">
             <div class="text-xl font-black text-yellow-500 cursor-pointer" onclick="location.href='index.html'">🛡️ وساطة</div>
-            <div id="ticketStatus" class="text-[10px] text-yellow-500 font-bold px-2 py-1 bg-yellow-500/10 rounded">جاري التحقق..</div>
+            <div id="ticketStatus" class="text-[9px] text-yellow-500 font-bold px-2 py-1 bg-yellow-500/10 rounded uppercase">بانتظار الإدارة</div>
         </div>
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3">
+            <button onclick="depositDialog()" class="bg-green-500/10 text-green-500 text-[10px] px-3 py-1 rounded-lg font-bold border border-green-500/20 hover:bg-green-500/20 transition">إيداع رصيد +</button>
             <div class="bg-white/5 px-3 py-1.5 rounded-xl flex items-center gap-2 text-xs">
                 <span id="miniBalance" class="font-black text-yellow-500">0.00</span>
-                <span class="text-gray-500">SAR</span>
+                <span class="text-gray-500 font-bold">SAR</span>
             </div>
-            <div id="uName" class="bg-yellow-500 text-black px-3 py-1 rounded-lg text-xs font-black">...</div>
         </div>
     </nav>
 
     <div class="flex-1 flex flex-col max-w-4xl mx-auto w-full p-4 overflow-hidden">
-        <!-- Setup Form -->
-        <div id="setupForm" class="bg-[#111218] p-8 rounded-[2rem] border border-white/10 shadow-2xl text-center">
-            <h3 class="text-2xl font-black mb-6">فتح طلب وساطة جديد</h3>
+        <!-- Setup Form: العميل يوصف طلبه فقط -->
+        <div id="setupForm" class="bg-[#111218] p-8 rounded-[2.5rem] border border-white/10 shadow-2xl">
+            <h3 class="text-2xl font-black mb-6 text-center">فتح طلب وساطة</h3>
             <div class="space-y-4 text-right">
                 <div class="bg-black/50 p-4 rounded-xl border border-white/5">
-                    <p class="text-[10px] text-gray-500 mb-1 uppercase">اسم المنتج</p>
-                    <input type="text" id="productName" placeholder="مثال: بوت ديسكورد" class="bg-transparent w-full text-lg outline-none">
+                    <p class="text-[10px] text-gray-500 mb-1">ماذا تريد أن تشتري؟ (وصف المنتج)</p>
+                    <input type="text" id="productName" placeholder="مثال: حساب ديسكورد / كود برمجيات" class="bg-transparent w-full text-lg outline-none text-white">
                 </div>
-                <div class="bg-black/50 p-4 rounded-xl border border-white/5">
-                    <p class="text-[10px] text-gray-500 mb-1 uppercase">المبلغ المطلوب (SAR)</p>
-                    <input type="number" id="amount" value="150" class="bg-transparent w-full text-2xl font-black outline-none text-yellow-500">
+                <div class="bg-yellow-500/5 p-4 rounded-xl border border-yellow-500/10">
+                    <p class="text-[10px] text-yellow-500 mb-1 font-bold">ملاحظة: السعر ورسوم الوساطة يتم تحديدها من قبل الوسيط فقط.</p>
                 </div>
             </div>
-            <button onclick="startChat()" class="w-full bg-yellow-500 text-black py-4 rounded-xl font-black text-lg mt-6 block">بدأ المحادثة</button>
+            <button onclick="startChat()" class="w-full bg-yellow-500 text-black py-4 rounded-2xl font-black text-lg mt-6 hover:scale-[1.02] transition">تأكيد وفتح التذكرة</button>
         </div>
 
         <!-- Chat Area -->
-        <div id="chatArea" class="hidden flex-1 flex flex-col bg-[#111218]/50 rounded-[2rem] border border-white/5 overflow-hidden">
-            <div id="ticketInfoBar" class="p-3 bg-white/5 border-b border-white/5 flex justify-between items-center text-[10px] text-gray-400">
-                <div id="infoDetails">المنتج: -- | المبلغ: -- | الرسوم: --</div>
-                <div id="ticketId">#ID</div>
+        <div id="chatArea" class="hidden flex-1 flex flex-col bg-[#111218]/50 rounded-[2.5rem] border border-white/5 overflow-hidden">
+            <div id="infoBar" class="p-3 bg-white/5 border-b border-white/5 flex justify-between items-center text-[10px] text-gray-500">
+                <div id="infoDetails">المنتج: -- | السعر: -- | رسوم الوساطة: --</div>
+                <div id="uEmailID" class="font-mono">@user</div>
             </div>
 
-            <div id="messageList" class="flex-1 overflow-y-auto p-6 flex flex-col gap-3"></div>
+            <div id="messageList" class="flex-1 overflow-y-auto p-6 flex flex-col gap-2"></div>
             
-            <!-- طلب الدفع -->
-            <div id="paymentNotice" class="hidden p-4 bg-yellow-500/10 border-t border-yellow-500/20 items-center justify-between animate-pulse">
+            <!-- زر الدفع: يظهر فقط لما الوسيط يطلبه -->
+            <div id="paymentNotice" class="hidden p-5 bg-yellow-500/10 border-t border-yellow-500/20 items-center justify-between">
                 <div>
-                    <p class="text-[10px] text-yellow-500 font-bold uppercase">مطلوب الدفع الآن</p>
-                    <p class="text-lg font-black"><span id="payAmount">0.00</span> SAR</p>
+                    <p class="text-[10px] text-yellow-500 font-bold">طلب دفع من الوسيط</p>
+                    <p class="text-xl font-black" id="payAmount">0.00 SAR</p>
                 </div>
-                <button onclick="goToPayment()" class="bg-yellow-500 text-black px-8 py-3 rounded-xl font-black shadow-lg">دفع الآن 💳</button>
+                <button onclick="goToPayment()" class="bg-yellow-500 text-black px-10 py-4 rounded-2xl font-black shadow-xl hover:bg-yellow-400 transition">إتمام المعاملة 💳</button>
             </div>
 
             <div class="p-4 bg-black/40 flex gap-2">
-                <input id="userMsg" type="text" placeholder="اكتب للوسيط هنا..." class="flex-1 bg-white/5 rounded-xl px-4 py-3 outline-none focus:border-yellow-500 border border-transparent">
-                <button onclick="sendMsg()" class="bg-yellow-500 text-black px-6 rounded-xl font-bold">←</button>
+                <input id="userMsg" type="text" placeholder="اكتب للوسيط..." class="flex-1 bg-white/5 rounded-2xl px-5 py-4 outline-none border border-transparent focus:border-yellow-500">
+                <button onclick="sendMsg()" class="bg-yellow-500 text-black px-8 rounded-2xl font-black">←</button>
             </div>
         </div>
     </div>
@@ -78,26 +76,29 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const session = JSON.parse(localStorage.getItem('wasata_session'));
-        const uEmailKey = session.email.replace(/\./g, '_');
-        let currentTicketData = null;
+        const uKey = session.email.replace(/\./g, '_');
+        let ticketData = null;
 
         function init() {
-            document.getElementById('uName').innerText = session.email.split('@')[0];
-            if(localStorage.getItem('wasata_ticket_active')) startChat(true);
+            // تحديث الرصيد فوق
+            db.ref('wallets/' + uKey).on('value', snap => {
+                document.getElementById('miniBalance').innerText = (snap.val()?.balance || 0).toFixed(2);
+            });
 
-            db.ref('tickets/' + uEmailKey).on('value', (snap) => {
-                const data = snap.val();
-                if(!data) return;
-                currentTicketData = data;
+            if(localStorage.getItem('wasata_active_ticket')) startChat(true);
 
-                document.getElementById('ticketStatus').innerText = data.status || 'معلق';
-                document.getElementById('infoDetails').innerText = `المنتج: ${data.product} | المبلغ: ${data.amount} SAR | الرسوم: ${data.fee || 0} SAR`;
-                
-                // تحديث الرسائل
+            db.ref('tickets/' + uKey).on('value', snap => {
+                ticketData = snap.val();
+                if(!ticketData) return;
+
+                document.getElementById('ticketStatus').innerText = ticketData.status;
+                document.getElementById('infoDetails').innerText = `المنتج: ${ticketData.product} | السعر: ${ticketData.amount || '--'} | الوساطة: ${ticketData.fee || '--'}`;
+
+                // عرض الرسائل
                 const list = document.getElementById('messageList');
                 list.innerHTML = "";
-                if(data.messages) {
-                    Object.values(data.messages).forEach(m => {
+                if(ticketData.messages) {
+                    Object.values(ticketData.messages).forEach(m => {
                         const div = document.createElement('div');
                         div.className = `message ${m.sender === 'admin' ? 'msg-admin' : m.sender === 'system' ? 'msg-system' : 'msg-user'}`;
                         div.innerHTML = m.text;
@@ -106,11 +107,11 @@
                     list.scrollTop = list.scrollHeight;
                 }
 
-                // عرض الدفع
+                // إدارة زر الدفع
                 const pBox = document.getElementById('paymentNotice');
-                if(data.action === 'showPay') {
+                if(ticketData.action === 'showPay') {
                     pBox.classList.replace('hidden', 'flex');
-                    document.getElementById('payAmount').innerText = data.amount;
+                    document.getElementById('payAmount').innerText = ticketData.amount + " SAR";
                 } else {
                     pBox.classList.replace('flex', 'hidden');
                 }
@@ -121,34 +122,37 @@
             document.getElementById('setupForm').classList.add('hidden');
             document.getElementById('chatArea').classList.remove('hidden');
             if(!isReturning) {
-                localStorage.setItem('wasata_ticket_active', 'true');
-                const amt = document.getElementById('amount').value;
-                const prod = document.getElementById('productName').value;
-                db.ref('tickets/' + uEmailKey).set({
+                localStorage.setItem('wasata_active_ticket', 'true');
+                db.ref('tickets/' + uKey).set({
                     userEmail: session.email,
-                    product: prod,
-                    amount: amt,
-                    fee: (amt * 0.10).toFixed(2), // رسوم 10% تلقائياً
-                    status: 'بانتظار الوسيط',
+                    product: document.getElementById('productName').value || 'طلب وساطة',
+                    status: 'بانتظار تحديد السعر',
                     createdAt: Date.now()
                 });
             }
         }
 
+        function depositDialog() {
+            const amount = prompt("أدخل المبلغ الذي تريد إيداعه في محفظتك (SAR):");
+            if(amount && !isNaN(amount)) {
+                location.href = `payment.html?type=deposit&total=${amount}&ticket=${uKey}`;
+            }
+        }
+
         function goToPayment() {
-            const amt = parseFloat(currentTicketData.amount);
-            const fee = parseFloat(currentTicketData.fee || (amt * 0.10));
-            const total = amt + fee;
-            const prod = encodeURIComponent(currentTicketData.product);
-            // التوجيه مع تمرير كل البيانات للربط
-            location.href = `payment.html?total=${total.toFixed(2)}&amt=${amt}&fee=${fee}&prod=${prod}&ticket=${uEmailKey}`;
+            const total = parseFloat(ticketData.amount) + parseFloat(ticketData.fee || 0);
+            location.href = `payment.html?type=ticket&total=${total}&ticket=${uKey}`;
         }
 
         function sendMsg() {
-            const input = document.getElementById('userMsg');
-            if(!input.value) return;
-            db.ref('tickets/' + uEmailKey + '/messages').push({ text: input.value, sender: 'user', time: new Date().toLocaleTimeString() });
-            input.value = "";
+            const inp = document.getElementById('userMsg');
+            if(!inp.value) return;
+            db.ref('tickets/' + uKey + '/messages').push({
+                text: inp.value,
+                sender: 'user',
+                time: new Date().toLocaleTimeString('ar-SA')
+            });
+            inp.value = "";
         }
 
         init();
