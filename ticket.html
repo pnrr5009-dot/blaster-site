@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>تذكرة وساطة | Wasata Elite</title>
+    <title>تذكرة وساطة | Wasata Elite v9.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -11,13 +11,78 @@
         .message { margin-bottom: 12px; padding: 10px 15px; border-radius: 18px; max-width: 80%; }
         .msg-admin { background: #1a1d2e; align-self: flex-start; border-right: 3px solid #eab308; }
         .msg-user { background: #eab308; color: black; align-self: flex-end; font-weight: bold; }
+        .msg-system { background: rgba(255,255,255,0.03); align-self: center; font-size: 11px; color: #666; border: 1px dashed rgba(255,255,255,0.05); }
         #paymentNotice { display: none; background: #eab30811; border-top: 1px solid #eab30833; padding: 12px; }
+
+        .wallet-mini {
+            background: linear-gradient(135deg, rgba(234,179,8,0.08), rgba(234,179,8,0.02));
+            border: 1px solid rgba(234,179,8,0.15);
+        }
+
+        .notif-banner {
+            display: none;
+            animation: slideDown 0.5s ease-out;
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .refund-banner {
+            background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(34,197,94,0.02));
+            border: 1px solid rgba(34,197,94,0.2);
+        }
+
+        .ticket-field {
+            transition: 0.2s;
+        }
+        .ticket-field:focus-within {
+            border-color: rgba(234,179,8,0.3);
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
 <body class="flex flex-col h-screen">
+    <!-- Notification Banner -->
+    <div id="notifBanner" class="notif-banner bg-green-500/10 border-b border-green-500/20 p-3 text-center">
+        <div class="flex justify-center items-center gap-3">
+            <span id="notifBannerIcon">✅</span>
+            <span id="notifBannerText" class="text-sm font-bold text-green-500">تم إعادة المبلغ إلى محفظتك!</span>
+            <button onclick="dismissBanner()" class="text-gray-500 hover:text-white text-xs">✕</button>
+        </div>
+    </div>
+
+    <!-- Refund Success Banner -->
+    <div id="refundSuccess" class="notif-banner refund-banner p-4">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">✅</span>
+                <div>
+                    <p class="font-bold text-green-500" id="refundSuccessText">تم استرجاع المبلغ بنجاح!</p>
+                    <p class="text-xs text-gray-500" id="refundSuccessSub">المبلغ مضاف إلى محفظتك الآن</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="location.href='#wallet'" class="bg-yellow-500/20 text-yellow-500 px-3 py-1.5 rounded-xl text-xs font-bold">محفظتي</button>
+                <button onclick="dismissBanner('refundSuccess')" class="text-gray-500 hover:text-white text-xs">✕</button>
+            </div>
+        </div>
+    </div>
+
     <nav class="p-4 flex justify-between items-center bg-black/40 border-b border-white/5 shadow-2xl">
-        <div class="text-xl font-black text-yellow-500 cursor-pointer" onclick="location.href='index.html'">🛡️ وساطة</div>
+        <div class="flex items-center gap-3">
+            <div class="text-xl font-black text-yellow-500 cursor-pointer" onclick="location.href='index.html'">🛡️ وساطة</div>
+            <span class="text-[10px] opacity-30">v9.5</span>
+        </div>
         <div class="flex items-center gap-4">
+            <!-- Mini Wallet -->
+            <div class="wallet-mini px-3 py-1.5 rounded-xl flex items-center gap-2 text-xs cursor-pointer" onclick="location.href='index.html'">
+                <span>💰</span>
+                <span id="miniBalance" class="font-black text-yellow-500">0.00</span>
+                <span class="text-gray-500 text-[9px]">SAR</span>
+            </div>
             <div id="ticketStatus" class="text-[10px] text-yellow-500 font-bold px-2 py-1 bg-yellow-500/10 rounded">جاري التحقق..</div>
             <div id="uName" class="bg-yellow-500 text-black px-3 py-1 rounded-lg text-xs font-black">...</div>
         </div>
@@ -27,25 +92,65 @@
         <!-- Setup Form -->
         <div id="setupForm" class="bg-[#111218] p-8 rounded-[2rem] border border-white/10 shadow-2xl text-center">
             <h3 class="text-2xl font-black mb-6">فتح طلب وساطة جديد</h3>
-            <div class="bg-black/50 p-4 rounded-xl border border-white/5 mb-6">
-                <p class="text-[10px] text-gray-500 mb-2 uppercase">مبلغ المعاملة (SAR)</p>
-                <input type="number" id="amount" value="500" class="bg-transparent text-2xl font-black outline-none text-yellow-500 text-center">
+            
+            <div class="space-y-4 text-right">
+                <div class="ticket-field bg-black/50 p-4 rounded-xl border border-white/5">
+                    <p class="text-[10px] text-gray-500 mb-2 uppercase">اسم المنتج / الخدمة</p>
+                    <input type="text" id="productName" placeholder="مثال: بوت ديسكورد كامل" class="bg-transparent w-full text-lg font-bold outline-none text-white">
+                </div>
+                <div class="ticket-field bg-black/50 p-4 rounded-xl border border-white/5">
+                    <p class="text-[10px] text-gray-500 mb-2 uppercase">مبلغ المعاملة (SAR)</p>
+                    <input type="number" id="amount" value="500" class="bg-transparent w-full text-2xl font-black outline-none text-yellow-500">
+                </div>
+                <div class="ticket-field bg-black/50 p-4 rounded-xl border border-white/5">
+                    <p class="text-[10px] text-gray-500 mb-2 uppercase">وصف مختصر</p>
+                    <textarea id="productDesc" rows="2" placeholder="وصف المنتج أو الخدمة..." class="bg-transparent w-full text-sm outline-none text-gray-400"></textarea>
+                </div>
             </div>
-            <button onclick="startChat()" class="w-full bg-yellow-500 text-black py-4 rounded-xl font-black text-lg">بدأ المحادثة</button>
+            
+            <button onclick="startChat()" class="w-full bg-yellow-500 text-black py-4 rounded-xl font-black text-lg mt-6 hover:bg-yellow-400 transition">🚀 بدأ المحادثة</button>
         </div>
 
         <!-- Chat Area -->
         <div id="chatArea" class="hidden flex-1 flex flex-col bg-[#111218]/50 rounded-[2rem] border border-white/5 overflow-hidden">
-            <div id="messageList" class="flex-1 overflow-y-auto p-6 flex flex-col gap-3"></div>
-            
-            <div id="paymentNotice" class="flex justify-between items-center">
-                <p class="text-xs text-yellow-500 font-bold">يرجى دفع عربون الوساطة:</p>
-                <button onclick="location.href='payment.html'" class="bg-yellow-500 text-black px-5 py-2 rounded-lg font-black text-xs">دفع الآن</button>
+            <!-- Ticket Info Bar -->
+            <div id="ticketInfoBar" class="p-3 bg-white/5 border-b border-white/5 flex justify-between items-center text-xs">
+                <div>
+                    <span class="text-yellow-500 font-bold" id="infoProduct">المنتج: —</span>
+                    <span class="text-gray-500 mr-3" id="infoAmount">| المبلغ: — SAR</span>
+                    <span class="text-gray-500 mr-3" id="infoFee">| رسوم الوساطة: — SAR</span>
+                </div>
+                <div id="ticketIdDisplay" class="text-[9px] text-gray-600"></div>
             </div>
 
+            <div id="messageList" class="flex-1 overflow-y-auto p-6 flex flex-col gap-3"></div>
+            
+            <!-- Payment Notice -->
+            <div id="paymentNotice" class="flex justify-between items-center px-4 py-3">
+                <p class="text-xs text-yellow-500 font-bold">💳 يرجى دفع عربون الوساطة لتأكيد التذكرة:</p>
+                <div class="flex gap-2">
+                    <span class="text-sm font-black text-yellow-500" id="payAmount">0 SAR</span>
+                    <button onclick="processPayment()" class="bg-yellow-500 text-black px-5 py-2 rounded-lg font-black text-xs hover:bg-yellow-400 transition">دفع الآن</button>
+                </div>
+            </div>
+
+            <!-- Chat Input -->
             <div class="p-4 bg-black/40 flex gap-2">
                 <input id="userMsg" type="text" placeholder="اكتب للوسيط هنا..." class="flex-1 bg-white/5 rounded-xl px-4 py-3 outline-none focus:border-yellow-500 border border-transparent">
-                <button onclick="sendMsg()" class="bg-yellow-500 text-black px-5 rounded-xl font-bold">←</button>
+                <button onclick="sendMsg()" class="bg-yellow-500 text-black px-5 rounded-xl font-bold hover:bg-yellow-400 transition">←</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Refund Notification Modal -->
+    <div id="refundNotifModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center" onclick="closeRefundNotif()">
+        <div class="bg-[#111218] border border-green-500/30 rounded-[2rem] p-8 max-w-sm mx-4 text-center" onclick="event.stopPropagation()">
+            <div class="text-5xl mb-4">✅</div>
+            <h3 class="text-xl font-black text-green-500 mb-2">تم الاسترجاع بنجاح!</h3>
+            <p id="refundNotifText" class="text-sm text-gray-400 mb-4">تم إعادة المبلغ إلى محفظتك في وساطة</p>
+            <div class="flex gap-2 justify-center">
+                <button onclick="closeRefundNotif(); location.href='index.html'" class="bg-yellow-500 text-black px-6 py-2.5 rounded-xl font-black text-sm">محفظتي 💰</button>
+                <button onclick="closeRefundNotif()" class="bg-white/5 px-6 py-2.5 rounded-xl font-bold text-sm">موافق</button>
             </div>
         </div>
     </div>
@@ -61,22 +166,148 @@
 
         function init() {
             document.getElementById('uName').innerText = session.email.split('@')[0];
-            if(localStorage.getItem('wasata_ticket_active')) startChat(true);
+            loadWalletBalance();
             
-            // مراقبة التغيرات
-            db.ref('tickets/' + uEmailKey).on('value', (snap) => {
+            // Check if coming from notification link (refund redirect)
+            const urlParams = new URLSearchParams(window.location.search);
+            const ticketFromUrl = urlParams.get('ticket');
+            
+            if (localStorage.getItem('wasata_ticket_active') || ticketFromUrl) {
+                const ticketKey = ticketFromUrl || uEmailKey;
+                startChat(true, ticketKey);
+            }
+            
+            // Listen for new notifications
+            listenForNotifications();
+            
+            // Monitor ticket data
+            monitorTicketData();
+        }
+
+        // ========== WALLET ==========
+
+        function loadWalletBalance() {
+            db.ref('wallets/' + uEmailKey).on('value', (snap) => {
+                const data = snap.val() || { balance: 0 };
+                document.getElementById('miniBalance').innerText = (data.balance || 0).toFixed(2);
+            });
+        }
+
+        // ========== NOTIFICATIONS ==========
+
+        function listenForNotifications() {
+            db.ref('notifications/' + uEmailKey).orderByChild('timestamp').limitToLast(5).on('value', (snap) => {
+                snap.forEach((child) => {
+                    const notif = child.val();
+                    
+                    // Check if this is a refund notification and not read
+                    if (notif.type === 'refund' && !notif._bannerShown) {
+                        showRefundBanner(notif);
+                        // Mark as shown
+                        db.ref('notifications/' + uEmailKey + '/' + child.key).update({ _bannerShown: true });
+                    }
+                    
+                    // Check if ticket was updated
+                    if (notif.type === 'update' && notif.ticketKey) {
+                        // Could show a subtle indicator
+                    }
+                });
+            });
+        }
+
+        function showRefundBanner(notif) {
+            const text = notif.text || 'تم إعادة المبلغ إلى محفظتك';
+            document.getElementById('notifBannerText').innerText = text;
+            document.getElementById('notifBanner').style.display = 'block';
+            
+            // Auto-hide after 8 seconds
+            setTimeout(() => {
+                document.getElementById('notifBanner').style.display = 'none';
+            }, 8000);
+            
+            // Show the refund success banner too
+            const match = text.match(/(\d+\.?\d*)/);
+            const amount = match ? match[0] : '';
+            document.getElementById('refundSuccessText').innerText = 'تم استرجاع ' + amount + ' SAR بنجاح!';
+            document.getElementById('refundSuccessSub').innerHTML = '✅ المبلغ مضاف إلى محفظتك - <a href="index.html" class="text-yellow-500 underline">اضغط هنا لفتح المحفظة</a>';
+            document.getElementById('refundSuccess').style.display = 'block';
+            
+            setTimeout(() => {
+                document.getElementById('refundSuccess').style.display = 'none';
+            }, 10000);
+            
+            // Also show modal
+            const modal = document.getElementById('refundNotifModal');
+            document.getElementById('refundNotifText').innerText = 'تم إعادة ' + (amount || 'المبلغ') + ' SAR إلى محفظتك في وساطة.\nيمكنك النقر على "محفظتي" لعرض الرصيد.';
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeRefundNotif() {
+            const modal = document.getElementById('refundNotifModal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+
+        function dismissBanner(id) {
+            const el = document.getElementById(id || 'notifBanner');
+            if (el) el.style.display = 'none';
+        }
+
+        // ========== TICKET MONITORING ==========
+
+        function monitorTicketData() {
+            if (!localStorage.getItem('wasata_ticket_active')) return;
+            
+            const ticketKey = uEmailKey;
+            
+            db.ref('tickets/' + ticketKey).on('value', (snap) => {
                 const data = snap.val();
-                if(!data) return;
-                if(data.status) document.getElementById('ticketStatus').innerText = data.status;
-                if(data.action === 'showPay') document.getElementById('paymentNotice').style.display = 'flex';
+                if (!data) return;
                 
+                // Update status
+                if (data.status) {
+                    document.getElementById('ticketStatus').innerText = data.status;
+                }
+                
+                // Update info bar
+                if (data.product) {
+                    document.getElementById('infoProduct').innerText = 'المنتج: ' + data.product;
+                }
+                if (data.amount) {
+                    document.getElementById('infoAmount').innerHTML = '| المبلغ: <span class="text-yellow-500">' + data.amount + '</span> SAR';
+                }
+                if (data.fee) {
+                    document.getElementById('infoFee').innerHTML = '| رسوم الوساطة: <span class="text-yellow-500">' + data.fee + '</span> SAR';
+                }
+                
+                // Show ticket ID
+                document.getElementById('ticketIdDisplay').innerText = '📎 #' + ticketKey.substr(0, 8);
+                
+                // Payment notice
+                if (data.action === 'showPay' && data.amount) {
+                    document.getElementById('payAmount').innerText = data.amount + ' SAR';
+                    document.getElementById('paymentNotice').style.display = 'flex';
+                }
+                
+                // Load messages
                 const list = document.getElementById('messageList');
                 list.innerHTML = "";
-                if(data.messages) {
+                
+                if (data.messages) {
                     Object.values(data.messages).forEach(m => {
                         const div = document.createElement('div');
-                        div.className = m.sender === 'admin' ? "msg-admin message shadow-lg" : "msg-user message shadow-xl";
-                        div.innerHTML = m.sender === 'admin' ? `<span class="text-[9px] font-black text-yellow-500 block mb-1 uppercase">VERIFIED MODERATOR</span> ${m.text}` : m.text;
+                        
+                        if (m.sender === 'system') {
+                            div.className = "msg-system message shadow-lg";
+                            div.innerText = m.text;
+                        } else {
+                            div.className = m.sender === 'admin' ? "msg-admin message shadow-lg" : "msg-user message shadow-xl";
+                            div.innerHTML = m.sender === 'admin' 
+                                ? `<span class="text-[9px] font-black text-yellow-500 block mb-1 uppercase">🛡️ الوسيط</span> ${m.text}` 
+                                : m.text;
+                        }
+                        
                         list.appendChild(div);
                     });
                     list.scrollTop = list.scrollHeight;
@@ -84,30 +315,102 @@
             });
         }
 
-        function startChat(isReturning = false) {
+        // ========== START TICKET ==========
+
+        function startChat(isReturning = false, ticketKeyOverride = null) {
             document.getElementById('setupForm').classList.add('hidden');
             document.getElementById('chatArea').classList.remove('hidden');
-            if(!isReturning) {
+            
+            const ticketKey = ticketKeyOverride || uEmailKey;
+            
+            if (!isReturning) {
                 localStorage.setItem('wasata_ticket_active', 'true');
-                // إنشاء التذكرة فوراً لكي تظهر في لوحة الأدمن
-                db.ref('tickets/' + uEmailKey).set({
+                
+                const product = document.getElementById('productName').value || 'منتج غير محدد';
+                const amount = parseFloat(document.getElementById('amount').value) || 500;
+                const desc = document.getElementById('productDesc').value || '';
+                
+                // Create ticket
+                db.ref('tickets/' + ticketKey).set({
                     userEmail: session.email,
+                    product: product,
+                    amount: amount,
+                    description: desc,
                     status: 'بانتظار الوسيط',
+                    createdAt: Date.now(),
                     lastActive: Date.now()
                 });
-                sendMsg("🚀 تكت جديد: العميل بانتظارك.");
+                
+                // Auto-calculate fee based on platform settings
+                db.ref('platformSettings').once('value', (snap) => {
+                    const settings = snap.val() || {};
+                    const feePercent = settings.feePercent || 2.5;
+                    const feeMin = settings.feeMin || 10;
+                    const feeMax = settings.feeMax || 500;
+                    
+                    let fee = (amount * feePercent) / 100;
+                    fee = Math.max(fee, feeMin);
+                    fee = Math.min(fee, feeMax);
+                    fee = Math.round(fee * 100) / 100;
+                    
+                    db.ref('tickets/' + ticketKey).update({ fee: fee });
+                });
+                
+                sendMsg("🚀 تكت جديد: " + product + " | " + amount + " SAR");
             }
         }
+
+        // ========== SEND MESSAGE ==========
 
         function sendMsg(customText = null) {
             const input = document.getElementById('userMsg');
             const text = customText || input.value;
-            if(!text) return;
-            db.ref('tickets/' + uEmailKey + '/messages').push({ text: text, sender: 'user', time: new Date().toLocaleTimeString() });
-            input.value = "";
+            if (!text) return;
+            
+            const ticketKey = uEmailKey;
+            
+            db.ref('tickets/' + ticketKey + '/messages').push({ 
+                text: text, 
+                sender: 'user', 
+                time: new Date().toLocaleTimeString('ar-SA')
+            });
+            
+            if (!customText) input.value = "";
+        }
+
+        // ========== PAYMENT ==========
+
+        function processPayment() {
+            const ticketKey = uEmailKey;
+            
+            db.ref('tickets/' + ticketKey).once('value', (snap) => {
+                const data = snap.val();
+                if (!data || !data.amount) return;
+                
+                const amount = data.amount;
+                
+                // Simulate payment - in real app, redirect to payment gateway
+                db.ref('tickets/' + ticketKey).update({
+                    status: 'تم الدفع ✓',
+                    paidAt: Date.now(),
+                    action: null
+                });
+                
+                db.ref('tickets/' + ticketKey + '/messages').push({
+                    text: '💳 تم تأكيد الدفع بنجاح! المبلغ: ' + amount + ' SAR محفوظ لدى وساطة.',
+                    sender: 'system',
+                    time: new Date().toLocaleTimeString('ar-SA')
+                });
+                
+                document.getElementById('paymentNotice').style.display = 'none';
+                document.getElementById('ticketStatus').innerText = 'تم الدفع ✓';
+                
+                alert('✅ تم الدفع بنجاح! المبلغ محفوظ لدى وساطة لحين إتمام المعاملة.');
+            });
         }
 
         init();
     </script>
 </body>
+</html>
 </html>
