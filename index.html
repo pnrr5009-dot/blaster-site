@@ -100,6 +100,10 @@
         }
         .modal-content::-webkit-scrollbar { width: 3px; }
         .modal-content::-webkit-scrollbar-thumb { background: #eab308; border-radius: 10px; }
+
+        /* Transaction History */
+        .tx-item { transition: 0.2s; }
+        .tx-item:hover { background: rgba(234,179,8,0.03); }
     </style>
 </head>
 <body class="min-h-screen">
@@ -120,16 +124,16 @@
             </div>
             <!-- Notifications Bell -->
             <div id="notifBell" class="hidden relative cursor-pointer" onclick="toggleNotifications()">
-                <div class="bg-white/5 p-2 rounded-xl hover:bg-white/10 transition">
+                <div class="bg-white/5 p-2 rounded-xl hover:bg-white/10 transition relative">
                     <span class="text-xl">🔔</span>
                     <div id="notifDot" class="notification-dot" style="display: none;"></div>
                 </div>
                 <!-- Notifications Dropdown -->
-                <div id="notifDropdown" class="dropdown" style="left: auto; right: 0; min-width: 320px; max-height: 400px; overflow-y: auto;">
-                    <div class="text-[10px] text-gray-500 font-bold uppercase mb-2 px-2">الإشعارات</div>
+                <div id="notifDropdown" class="dropdown" style="left: auto; right: 0; min-width: 340px; max-height: 420px; overflow-y: auto; display: none;">
+                    <div class="text-[10px] text-gray-500 font-bold uppercase mb-2 px-2 pb-2 border-b border-white/5">📬 الإشعارات</div>
                     <div id="notifList"></div>
                     <div class="text-center mt-2 pt-2 border-t border-white/5">
-                        <button onclick="markAllNotifRead()" class="text-[10px] text-yellow-500 font-bold">تحديد الكل كمقروء</button>
+                        <button onclick="markAllNotifRead()" class="text-[10px] text-yellow-500 font-bold hover:text-yellow-400 transition">تحديد الكل كمقروء</button>
                     </div>
                 </div>
             </div>
@@ -155,16 +159,17 @@
         <!-- Wallet Section for Logged-in Users -->
         <div id="walletSection" class="hidden mt-12 max-w-md mx-auto">
             <div class="wallet-card p-6 rounded-[2rem] relative" style="z-index: 1;">
-                <div class="flex justify-between items-start mb-4">
+                <div class="flex justify-between items-start mb-4 relative" style="z-index: 1;">
                     <div class="text-right">
                         <p class="text-[10px] text-gray-500 uppercase tracking-wider">محفظة وساطة</p>
                         <p class="text-3xl font-black text-yellow-500 mt-1"><span id="walletBalanceHero">0.00</span> <span class="text-sm text-gray-500">SAR</span></p>
                     </div>
                     <div class="text-3xl">💳</div>
                 </div>
-                <div class="flex gap-2">
+                <div class="flex gap-2 relative" style="z-index: 1;">
                     <button onclick="openDepositModal()" class="flex-1 bg-yellow-500/20 text-yellow-500 py-2 rounded-xl font-bold text-xs hover:bg-yellow-500/30 transition">إيداع</button>
                     <button onclick="openWithdrawModal()" class="flex-1 bg-white/5 py-2 rounded-xl font-bold text-xs hover:bg-white/10 transition">سحب</button>
+                    <button onclick="openTxHistory()" class="flex-1 bg-blue-500/10 text-blue-500 py-2 rounded-xl font-bold text-xs hover:bg-blue-500/20 transition">السجل</button>
                 </div>
             </div>
         </div>
@@ -180,7 +185,7 @@
         <!-- قسم كيف يعمل وساطة -->
         <div class="mt-32 grid md:grid-cols-2 gap-12 items-center text-right">
             <div>
-                <h2 class="text-4xl font-black mb-8 text-yellow-500">كيف يعمّل وساطة؟</h2>
+                <h2 class="text-4xl font-black mb-8 text-yellow-500">كيف يعمل وساطة؟</h2>
                 <div class="space-y-6">
                     <div class="flex gap-4">
                         <div class="step-num">1</div>
@@ -200,7 +205,7 @@
                     </div>
                     <div class="flex gap-4 border-t border-white/10 pt-4">
                         <div class="step-num">5</div>
-                        <p class="text-lg font-bold">وساطة يحوّل الفلوس للبائع فوراً</p>
+                        <p class="text-lg font-bold">وساطة يحوّل المبلغ للبائع فوراً</p>
                     </div>
                 </div>
             </div>
@@ -246,6 +251,28 @@
             </div>
         </div>
 
+        <!-- قسم الإحصائيات -->
+        <div class="mt-20 mb-20">
+            <div class="grid md:grid-cols-4 gap-4">
+                <div class="bg-white/5 p-6 rounded-2xl border border-white/5">
+                    <div class="text-3xl font-black text-yellow-500">1,247</div>
+                    <div class="text-xs text-gray-500 mt-1">صفقة مكتملة</div>
+                </div>
+                <div class="bg-white/5 p-6 rounded-2xl border border-white/5">
+                    <div class="text-3xl font-black text-yellow-500">₿ 2.4M</div>
+                    <div class="text-xs text-gray-500 mt-1">حجم التداول</div>
+                </div>
+                <div class="bg-white/5 p-6 rounded-2xl border border-white/5">
+                    <div class="text-3xl font-black text-yellow-500">98.7%</div>
+                    <div class="text-xs text-gray-500 mt-1">نسبة الرضا</div>
+                </div>
+                <div class="bg-white/5 p-6 rounded-2xl border border-white/5">
+                    <div class="text-3xl font-black text-yellow-500">&lt;5 د</div>
+                    <div class="text-xs text-gray-500 mt-1">متوسط وقت الوساطة</div>
+                </div>
+            </div>
+        </div>
+
         <footer class="py-12 border-t border-white/5 text-gray-600 text-xs">
             © 2026 وساطة Wasata Elite — جميع الحقوق محفوظة لشركة HnTr الأمنية
         </footer>
@@ -255,4 +282,480 @@
     <div id="walletModal" class="modal-overlay" onclick="closeModal(event, 'walletModal')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-black text-yellow-500">
+                <h3 class="text-xl font-black text-yellow-500">💳 محفظة وساطة</h3>
+                <button onclick="closeModal(event, 'walletModal')" class="text-gray-500 hover:text-white text-xl">✕</button>
+            </div>
+            <div class="wallet-card p-6 rounded-2xl mb-6 relative" style="z-index: 1;">
+                <div class="relative" style="z-index: 1;">
+                    <p class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">الرصيد الحالي</p>
+                    <p class="text-4xl font-black text-yellow-500"><span id="walletModalBalance">0.00</span> <span class="text-base text-gray-500">SAR</span></p>
+                    <p class="text-[10px] text-gray-600 mt-2">🔐 مشفرة ومعتمدة</p>
+                </div>
+            </div>
+            <div class="flex gap-2 mb-6">
+                <button onclick="closeModal(event, 'walletModal'); openDepositModal();" class="flex-1 bg-yellow-500 text-black py-3 rounded-xl font-bold text-sm hover:bg-yellow-400 transition">إيداع</button>
+                <button onclick="closeModal(event, 'walletModal'); openWithdrawModal();" class="flex-1 bg-white/10 py-3 rounded-xl font-bold text-sm hover:bg-white/20 transition">سحب</button>
+            </div>
+            <div class="border-t border-white/5 pt-4">
+                <p class="text-[10px] text-gray-500 font-bold uppercase mb-3">آخر المعاملات</p>
+                <div id="txList">
+                    <div class="text-center text-gray-600 text-xs py-4">لا توجد معاملات سابقة</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div id="depositModal" class="modal-overlay" onclick="closeModal(event, 'depositModal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-black text-yellow-500">💰 إيداع رصيد</h3>
+                <button onclick="closeModal(event, 'depositModal')" class="text-gray-500 hover:text-white text-xl">✕</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <p class="text-xs text-gray-500 mb-2">المبلغ (SAR)</p>
+                    <input type="number" id="depositAmount" value="100" class="w-full bg-black border border-white/10 rounded-xl p-4 text-2xl font-black outline-none text-yellow-500">
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 mb-2">طريقة الدفع</p>
+                    <select id="depositMethod" class="w-full bg-black border border-white/10 rounded-xl p-4 outline-none text-white">
+                        <option value="stcpay">STCPay</option>
+                        <option value="bank">تحويل بنكي (الراجحي)</option>
+                        <option value="card">بطاقة ائتمان</option>
+                    </select>
+                </div>
+                <button onclick="processDeposit()" class="w-full bg-yellow-500 text-black py-4 rounded-xl font-black text-lg hover:scale-[1.02] transition">تأكيد الإيداع</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Withdraw Modal -->
+    <div id="withdrawModal" class="modal-overlay" onclick="closeModal(event, 'withdrawModal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-black text-yellow-500">💸 سحب رصيد</h3>
+                <button onclick="closeModal(event, 'withdrawModal')" class="text-gray-500 hover:text-white text-xl">✕</button>
+            </div>
+            <div class="space-y-4">
+                <div class="bg-yellow-500/10 p-4 rounded-xl border border-yellow-500/20 text-center">
+                    <p class="text-[10px] text-gray-400 uppercase">الرصيد القابل للسحب</p>
+                    <p class="text-2xl font-black text-yellow-500"><span id="withdrawableBalance">0.00</span> SAR</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 mb-2">المبلغ</p>
+                    <input type="number" id="withdrawAmount" class="w-full bg-black border border-white/10 rounded-xl p-4 text-2xl font-black outline-none text-yellow-500">
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 mb-2">الوجهة</p>
+                    <select id="withdrawMethod" class="w-full bg-black border border-white/10 rounded-xl p-4 outline-none text-white">
+                        <option value="stcpay">STCPay</option>
+                        <option value="bank">الراجحي</option>
+                        <option value="paypal">PayPal</option>
+                    </select>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 mb-2">رقم الحساب / المحفظة</p>
+                    <input type="text" id="withdrawAccount" placeholder="أدخل رقم الحساب..." class="w-full bg-black border border-white/10 rounded-xl p-4 outline-none">
+                </div>
+                <button onclick="processWithdraw()" class="w-full bg-red-500/80 text-white py-4 rounded-xl font-black text-lg hover:bg-red-500 transition">تأكيد السحب</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tx History Modal -->
+    <div id="txModal" class="modal-overlay" onclick="closeModal(event, 'txModal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-black text-yellow-500">📋 سجل المعاملات</h3>
+                <button onclick="closeModal(event, 'txModal')" class="text-gray-500 hover:text-white text-xl">✕</button>
+            </div>
+            <div id="txFullList" class="space-y-2">
+                <div class="text-center text-gray-600 text-xs py-8">جاري التحميل...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = { databaseURL: "https://wasata-af6ac-default-rtdb.europe-west1.firebasedatabase.app" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Particles Config
+        particlesJS("particles-js", {
+            "particles": {
+                "number": { "value": 80 },
+                "color": { "value": "#eab308" },
+                "shape": { "type": "circle" },
+                "opacity": { "value": 0.2 },
+                "size": { "value": 2 },
+                "line_linked": { "enable": true, "distance": 150, "color": "#eab308", "opacity": 0.1, "width": 1 },
+                "move": { "enable": true, "speed": 1 }
+            },
+            "interactivity": { "events": { "onhover": { "enable": true, "mode": "grab" } } }
+        });
+
+        const currentUser = JSON.parse(localStorage.getItem('wasata_session'));
+        let unreadNotifCount = 0;
+        let notifOpen = false;
+
+        function initUI() {
+            const authContainer = document.getElementById('authContainer');
+            const walletBadge = document.getElementById('walletBadge');
+            const notifBell = document.getElementById('notifBell');
+            const walletSection = document.getElementById('walletSection');
+            const actionButtons = document.getElementById('actionButtons');
+            
+            if (currentUser) {
+                // Show wallet and notifications
+                walletBadge.classList.remove('hidden');
+                notifBell.classList.remove('hidden');
+                walletSection.classList.remove('hidden');
+                
+                authContainer.innerHTML = `
+                    <div class="cursor-pointer bg-yellow-500 text-black px-4 py-2 rounded-xl text-xs font-black shadow-lg relative">
+                        @${currentUser.email.split('@')[0]} ▼
+                        <div class="dropdown text-right">
+                            ${currentUser.role === 'admin' ? '<button onclick="location.href=\'admin.html\'" class="text-yellow-400 font-bold block w-full py-2 border-b border-white/5">لوحة التحكم ⚙️</button>' : ''}
+                            <button onclick="location.href=\'ticket.html\'" class="text-white font-bold block w-full py-2 border-b border-white/5">تذكرتي 🎫</button>
+                            <button onclick="openWalletModal()" class="text-white font-bold block w-full py-2 border-b border-white/5">محفظتي 💰</button>
+                            <button onclick="logout()" class="text-red-500 font-bold block w-full py-2">تسجيل الخروج 🚪</button>
+                        </div>
+                    </div>
+                `;
+                if (currentUser.role === 'admin') {
+                    actionButtons.innerHTML += `<button onclick="location.href='admin.html'" class="bg-white/5 border border-white/10 text-white px-8 py-5 rounded-full font-bold text-xl hover:bg-white/10 transition">لوحة التحكم ⚙️</button>`;
+                }
+                
+                // Load wallet and notifications
+                loadWallet();
+                loadNotifications();
+            } else {
+                authContainer.innerHTML = `
+                    <button onclick="location.href='login.html'" class="text-xs font-bold px-5 py-2 border border-white/10 rounded-xl hover:bg-white/5 transition">Sign Up</button>
+                    <button onclick="location.href='login.html'" class="text-xs font-bold px-5 py-2 bg-yellow-500 text-black rounded-xl hover:scale-105 transition">Log In</button>
+                `;
+            }
+        }
+
+        // ========== WALLET FUNCTIONS ==========
+
+        function loadWallet() {
+            if (!currentUser) return;
+            const uKey = currentUser.email.replace(/\./g, '_');
+            
+            db.ref('wallets/' + uKey).on('value', (snap) => {
+                const data = snap.val() || { balance: 0 };
+                const balance = data.balance || 0;
+                
+                document.getElementById('walletBalance').innerText = balance.toFixed(2);
+                document.getElementById('walletBalanceHero').innerText = balance.toFixed(2);
+                document.getElementById('walletModalBalance').innerText = balance.toFixed(2);
+                document.getElementById('withdrawableBalance').innerText = balance.toFixed(2);
+            });
+        }
+
+        function openWalletModal() {
+            document.getElementById('walletModal').classList.add('active');
+            loadTxList();
+        }
+
+        function openDepositModal() {
+            document.getElementById('depositModal').classList.add('active');
+        }
+
+        function openWithdrawModal() {
+            document.getElementById('withdrawModal').classList.add('active');
+        }
+
+        function openTxHistory() {
+            document.getElementById('txModal').classList.add('active');
+            loadTxFullList();
+        }
+
+        function closeModal(event, modalId) {
+            const modal = document.getElementById(modalId);
+            if (event.target === modal || event.target.classList.contains('modal-overlay')) {
+                modal.classList.remove('active');
+            }
+        }
+
+        function processDeposit() {
+            if (!currentUser) { alert('الرجاء تسجيل الدخول أولاً'); return; }
+            const amount = parseFloat(document.getElementById('depositAmount').value);
+            const method = document.getElementById('depositMethod').value;
+            
+            if (!amount || amount <= 0) { alert('الرجاء إدخال مبلغ صحيح'); return; }
+            
+            const uKey = currentUser.email.replace(/\./g, '_');
+            const txId = 'DEP-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
+            
+            // Add to wallet
+            db.ref('wallets/' + uKey).transaction((current) => {
+                return { balance: (current?.balance || 0) + amount };
+            });
+            
+            // Add transaction record
+            db.ref('transactions/' + uKey).push({
+                type: 'deposit',
+                amount: amount,
+                method: method,
+                status: 'completed',
+                timestamp: Date.now(),
+                txId: txId,
+                note: 'إيداع عبر ' + method
+            });
+            
+            // Add notification
+            addNotification('تم إيداع ' + amount.toFixed(2) + ' SAR في محفظتك', 'wallet', null);
+            
+            alert('✅ تم إيداع ' + amount.toFixed(2) + ' SAR بنجاح!');
+            document.getElementById('depositModal').classList.remove('active');
+        }
+
+        function processWithdraw() {
+            if (!currentUser) { alert('الرجاء تسجيل الدخول أولاً'); return; }
+            const amount = parseFloat(document.getElementById('withdrawAmount').value);
+            const method = document.getElementById('withdrawMethod').value;
+            const account = document.getElementById('withdrawAccount').value;
+            
+            if (!amount || amount <= 0) { alert('الرجاء إدخال مبلغ صحيح'); return; }
+            if (!account) { alert('الرجاء إدخال رقم الحساب'); return; }
+            
+            const uKey = currentUser.email.replace(/\./g, '_');
+            
+            // Check balance
+            db.ref('wallets/' + uKey).once('value', (snap) => {
+                const data = snap.val() || { balance: 0 };
+                const balance = data.balance || 0;
+                
+                if (amount > balance) {
+                    alert('❌ الرصيد غير كافٍ. الرصيد الحالي: ' + balance.toFixed(2) + ' SAR');
+                    return;
+                }
+                
+                if (amount < 10) {
+                    alert('❌ الحد الأدنى للسحب 10 SAR');
+                    return;
+                }
+                
+                // Deduct
+                db.ref('wallets/' + uKey).transaction((current) => {
+                    return { balance: (current?.balance || 0) - amount };
+                });
+                
+                const txId = 'WTH-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
+                
+                // Add transaction record
+                db.ref('transactions/' + uKey).push({
+                    type: 'withdraw',
+                    amount: amount,
+                    method: method,
+                    account: account,
+                    status: 'pending',
+                    timestamp: Date.now(),
+                    txId: txId,
+                    note: 'سحب إلى ' + method
+                });
+                
+                // Add notification
+                addNotification('🔄 طلب سحب ' + amount.toFixed(2) + ' SAR قيد المعالجة', 'wallet', null);
+                
+                alert('✅ تم تقديم طلب السحب بنجاح! سيتم معالجته خلال 24 ساعة.');
+                document.getElementById('withdrawModal').classList.remove('active');
+            });
+        }
+
+        function loadTxList() {
+            if (!currentUser) return;
+            const uKey = currentUser.email.replace(/\./g, '_');
+            const list = document.getElementById('txList');
+            
+            db.ref('transactions/' + uKey).orderByChild('timestamp').limitToLast(5).on('value', (snap) => {
+                list.innerHTML = '';
+                let hasTx = false;
+                
+                snap.forEach((child) => {
+                    hasTx = true;
+                    const tx = child.val();
+                    const div = document.createElement('div');
+                    div.className = 'tx-item flex justify-between items-center p-2 rounded-lg';
+                    div.innerHTML = `
+                        <div>
+                            <p class="text-xs font-bold">${tx.type === 'deposit' ? '💰 إيداع' : '💸 سحب'}</p>
+                            <p class="text-[10px] text-gray-500">${new Date(tx.timestamp).toLocaleDateString('ar-SA')}</p>
+                        </div>
+                        <p class="text-sm font-black ${tx.type === 'deposit' ? 'text-green-500' : 'text-red-500'}">
+                            ${tx.type === 'deposit' ? '+' : '-'}${tx.amount.toFixed(2)} SAR
+                        </p>
+                    `;
+                    list.appendChild(div);
+                });
+                
+                if (!hasTx) {
+                    list.innerHTML = '<div class="text-center text-gray-600 text-xs py-4">لا توجد معاملات سابقة</div>';
+                }
+            });
+        }
+
+        function loadTxFullList() {
+            if (!currentUser) return;
+            const uKey = currentUser.email.replace(/\./g, '_');
+            const list = document.getElementById('txFullList');
+            
+            db.ref('transactions/' + uKey).orderByChild('timestamp').limitToLast(50).on('value', (snap) => {
+                list.innerHTML = '';
+                let hasTx = false;
+                
+                snap.forEach((child) => {
+                    hasTx = true;
+                    const tx = child.val();
+                    const div = document.createElement('div');
+                    div.className = 'tx-item flex justify-between items-center p-3 rounded-xl bg-white/5';
+                    const date = new Date(tx.timestamp);
+                    const dateStr = date.toLocaleDateString('ar-SA') + ' ' + date.toLocaleTimeString('ar-SA', {hour: '2-digit', minute: '2-digit'});
+                    
+                    div.innerHTML = `
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2">
+                                <span>${tx.type === 'deposit' ? '💰' : '💸'}</span>
+                                <p class="text-xs font-bold">${tx.type === 'deposit' ? 'إيداع' : 'سحب'}</p>
+                                <span class="text-[9px] ${tx.status === 'completed' ? 'text-green-500' : tx.status === 'pending' ? 'text-yellow-500' : 'text-red-500'} bg-${tx.status === 'completed' ? 'green' : tx.status === 'pending' ? 'yellow' : 'red'}-500/10 px-2 py-0.5 rounded-full">
+                                    ${tx.status === 'completed' ? 'مكتمل' : tx.status === 'pending' ? 'قيد المعالجة' : 'ملغي'}
+                                </span>
+                            </div>
+                            <p class="text-[10px] text-gray-500 mt-1">${dateStr} · ${tx.note || ''}</p>
+                            ${tx.txId ? `<p class="text-[8px] text-gray-600 mt-0.5">📎 ${tx.txId}</p>` : ''}
+                        </div>
+                        <p class="text-sm font-black ${tx.type === 'deposit' ? 'text-green-500' : 'text-red-500'}">
+                            ${tx.type === 'deposit' ? '+' : '-'}${tx.amount.toFixed(2)} SAR
+                        </p>
+                    `;
+                    list.appendChild(div);
+                });
+                
+                if (!hasTx) {
+                    list.innerHTML = '<div class="text-center text-gray-600 text-xs py-8">لا توجد معاملات سابقة</div>';
+                }
+            });
+        }
+
+        // ========== NOTIFICATION FUNCTIONS ==========
+
+        function loadNotifications() {
+            if (!currentUser) return;
+            const uKey = currentUser.email.replace(/\./g, '_');
+            
+            db.ref('notifications/' + uKey).orderByChild('timestamp').limitToLast(20).on('value', (snap) => {
+                const list = document.getElementById('notifList');
+                list.innerHTML = '';
+                unreadNotifCount = 0;
+                
+                const notifs = [];
+                snap.forEach((child) => {
+                    const notif = child.val();
+                    notif._key = child.key;
+                    notifs.push(notif);
+                    if (!notif.read) unreadNotifCount++;
+                });
+                
+                // Reverse so newest first
+                notifs.reverse();
+                
+                if (notifs.length === 0) {
+                    list.innerHTML = '<div class="text-center text-gray-600 text-xs py-6">لا توجد إشعارات</div>';
+                } else {
+                    notifs.forEach((notif) => {
+                        const div = document.createElement('div');
+                        div.className = `notif-item p-3 rounded-xl ${notif.read ? 'opacity-60' : 'bg-yellow-500/5'}`;
+                        
+                        // If has ticketKey, make it clickable to go to ticket
+                        if (notif.ticketKey) {
+                            div.onclick = () => {
+                                if (notif.ticketKey) {
+                                    localStorage.setItem('wasata_ticket_active', 'true');
+                                    location.href = 'ticket.html?ticket=' + notif.ticketKey;
+                                }
+                                markNotifRead(notif._key);
+                            };
+                            div.style.cursor = 'pointer';
+                        } else {
+                            div.onclick = () => markNotifRead(notif._key);
+                            div.style.cursor = 'pointer';
+                        }
+                        
+                        const date = new Date(notif.timestamp);
+                        const timeStr = date.toLocaleTimeString('ar-SA', {hour: '2-digit', minute: '2-digit'});
+                        
+                        div.innerHTML = `
+                            <div class="flex justify-between items-start">
+                                <p class="text-xs font-bold ${notif.read ? 'text-gray-400' : 'text-white'}">${notif.text}</p>
+                                <span class="text-[9px] text-gray-600 mr-2 whitespace-nowrap">${timeStr}</span>
+                            </div>
+                            ${notif.ticketKey ? '<p class="text-[9px] text-yellow-500 mt-1">👈 اضغط للذهاب للمحادثة</p>' : ''}
+                            ${!notif.read ? '<div class="w-1.5 h-1.5 bg-yellow-500 rounded-full mt-1"></div>' : ''}
+                        `;
+                        list.appendChild(div);
+                    });
+                }
+                
+                // Update dot
+                document.getElementById('notifDot').style.display = unreadNotifCount > 0 ? 'block' : 'none';
+            });
+        }
+
+        function addNotification(text, type, ticketKey) {
+            if (!currentUser) return;
+            const uKey = currentUser.email.replace(/\./g, '_');
+            
+            db.ref('notifications/' + uKey).push({
+                text: text,
+                type: type || 'general',
+                ticketKey: ticketKey || null,
+                read: false,
+                timestamp: Date.now()
+            });
+        }
+
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notifDropdown');
+            notifOpen = !notifOpen;
+            dropdown.style.display = notifOpen ? 'block' : 'none';
+        }
+
+        function markNotifRead(key) {
+            if (!currentUser) return;
+            const uKey = currentUser.email.replace(/\./g, '_');
+            db.ref('notifications/' + uKey + '/' + key).update({ read: true });
+        }
+
+        function markAllNotifRead() {
+            if (!currentUser) return;
+            const uKey = currentUser.email.replace(/\./g, '_');
+            
+            db.ref('notifications/' + uKey).once('value', (snap) => {
+                snap.forEach((child) => {
+                    if (!child.val().read) {
+                        db.ref('notifications/' + uKey + '/' + child.key).update({ read: true });
+                    }
+                });
+            });
+            
+            alert('✅ تم تحديد جميع الإشعارات كمقروءة');
+        }
+
+        function checkAuth(type) {
+            if (currentUser) location.href = type === 'admin' ? 'admin.html' : 'ticket.html';
+            else location.href = 'login.html';
+        }
+
+        function logout() { 
+            localStorage.removeItem('wasata_session'); 
+            location.reload(); 
+        }
+        
+        initUI();
+    </script>
+</body>
+</html>
