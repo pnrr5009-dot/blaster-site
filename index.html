@@ -10,109 +10,119 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <style>
-        body { background: #05060b; color: white; font-family: sans-serif; overflow: hidden; margin: 0; }
+        body { background: #05060b; color: white; font-family: sans-serif; overflow-x: hidden; margin: 0; scroll-behavior: smooth; }
         #particles-js { position: fixed; width: 100%; height: 100%; z-index: -1; top: 0; left: 0; }
         .bg-dots { position: fixed; inset: 0; z-index: -2; background-image: radial-gradient(#ffffff08 1.5px, transparent 1.5px); background-size: 25px 25px; }
 
-        /* --- محاذاة القوائم المنسدلة --- */
-        .dropdown-base {
-            display: none; position: absolute; top: calc(100% + 10px); 
+        /* تعديل القوائم المنسدلة */
+        .dropdown-wrapper { position: relative; padding-bottom: 20px; margin-bottom: -20px; } /* مساحة ربط عشان ما تختفي القائمة */
+        
+        .dropdown-custom { 
+            display: none; position: absolute; top: 100%; 
             background: #111218; border: 1px solid rgba(234, 179, 8, 0.3); 
-            border-radius: 20px; padding: 10px; min-width: 260px; 
+            border-radius: 20px; padding: 15px; min-width: 250px; 
             box-shadow: 0 25px 50px rgba(0,0,0,0.9); z-index: 9999;
+            margin-top: 5px;
         }
-        
-        /* الجرس: يفتح لليسار (داخل الشاشة) */
-        .notif-pos { left: 0; text-align: right; }
-        
-        /* الحساب: يفتح لليمين (داخل الشاشة) */
-        .account-pos { right: 0; text-align: right; }
 
-        /* حل مشكلة اختفاء الماوس: إضافة مساحة حساسة شفافة */
-        .group { padding-bottom: 20px; margin-bottom: -20px; }
-        .group:hover .dropdown-base { display: block; }
+        /* قائمة الجرس (اليمين) تفتح لليسار */
+        .notif-dropdown { right: 0; left: auto; }
+        /* قائمة الحساب (اليسار) تفتح لليمين */
+        .auth-dropdown { left: 0; right: auto; }
 
-        /* نظام التنبيه الهام (الذي طلبته) */
-        .full-overlay {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+        .group:hover .dropdown-custom { display: block; }
+
+        /* نافذة التنبيه */
+        .custom-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92);
             backdrop-filter: blur(15px); z-index: 10000; align-items: center; justify-content: center;
         }
-        .notice-card {
+        .alert-card {
             background: #111218; border: 1px solid #333; border-radius: 35px;
-            padding: 40px; max-width: 500px; width: 90%; text-align: center;
-            box-shadow: 0 0 60px rgba(234,179,8,0.1);
+            padding: 45px; max-width: 480px; width: 90%; text-align: center;
+            box-shadow: 0 0 60px rgba(234,179,8,0.15);
         }
 
-        .hero-wallet {
-            background: linear-gradient(180deg, rgba(234,179,8,0.02) 0%, rgba(0,0,0,0.7) 100%);
-            border: 1px solid rgba(255,255,255,0.03); padding: 60px 40px;
-            border-radius: 50px; max-width: 500px; margin: 0 auto;
-        }
+        .notif-pulse { width: 10px; height: 10px; background: #ef4444; border-radius: 50%; position: absolute; top: 0; right: 0; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } }
     </style>
 </head>
 <body class="min-h-screen">
     <div id="particles-js"></div>
     <div class="bg-dots"></div>
 
-    <!-- التنبيه الهام (مسترجع) -->
-    <div id="alertOverlay" class="full-overlay">
-        <div class="notice-card">
-            <h1 class="text-7xl mb-6 text-yellow-600">!</h1>
+    <div id="importantNotice" class="custom-overlay">
+        <div class="alert-card">
+            <h2 class="text-6xl mb-6">!</h2>
             <h3 class="text-3xl font-black mb-4">تنبيه هام!</h3>
             <p class="text-gray-400 leading-relaxed mb-8">
-                في وقت سابق وردتنا العديد من الشكاوي حول عمليات احتيال شائعة يتم تنفيذها مؤخراً، نرجو منك اتباع التعليمات ولن يختفي هذا التنبيه حتى توافق عليه بالكامل.
+                في وقت سابق وردتنا العديد من الشكاوي حول عمليات احتيال شائعة تتم عبر الواتساب مؤخراً يرجى الانتباه جيداً.
                 <br><br>
-                <span class="text-red-500 font-bold">يرجى الانتباه جيداً للخطوات لتجنب الوقوع فيها</span>
+                <span class="text-red-500 font-bold">لا تحاول تتخطى التنبيه لأنه ماراح يختفي الا اذا وافقت عليه</span>
             </p>
-            <button onclick="closeNotice()" class="w-full bg-white text-black py-4 rounded-2xl font-black transition-all hover:bg-gray-200">فهمت ووافقت ✓</button>
+            <button onclick="closeNotice()" class="w-full bg-white text-black py-4 rounded-2xl font-black hover:bg-gray-200 transition">فهمت ووافقت ✓</button>
         </div>
     </div>
 
-    <!-- Navigation -->
+    <!-- Header / Navbar -->
     <nav class="p-6 flex justify-between items-center bg-black/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-[1000]">
-        <!-- الجرس (يسار) -->
+        
+        <!-- اليمين: التنبيهات -->
         <div class="flex items-center gap-4">
-            <div class="relative group">
-                <div class="bg-white/5 p-3 rounded-2xl cursor-pointer hover:bg-white/10 transition">
+            <div class="relative group dropdown-wrapper">
+                <div class="bg-white/5 p-3 rounded-2xl hover:bg-white/10 transition cursor-pointer">
                     <span class="text-xl">🔔</span>
+                    <div id="notifPing" class="notif-pulse" style="display: none;"></div>
                 </div>
-                <div class="dropdown-base notif-pos">
-                    <p class="text-[10px] text-gray-500 font-bold mb-4 border-b border-white/5 pb-2 uppercase">التنبيهات</p>
-                    <div id="notifArea" class="space-y-2 max-h-60 overflow-y-auto">
+                <div class="dropdown-custom notif-dropdown">
+                    <p class="text-[10px] text-gray-500 font-bold mb-4 border-b border-white/5 pb-2 uppercase tracking-widest text-right">الإشعارات الواردة</p>
+                    <div id="notifArea" class="space-y-3 max-h-64 overflow-y-auto">
                         <p class="text-[9px] text-gray-600 text-center py-4">لا توجد إشعارات حالياً</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="text-2xl font-black text-yellow-500 tracking-tighter">🛡️ وساطة <span class="text-[10px] opacity-20">V10</span></div>
+        <!-- السنتر: الشعار -->
+        <div class="text-3xl font-black text-yellow-500 tracking-tighter">🛡️ وساطة <span class="text-[10px] opacity-20">V10</span></div>
 
-        <!-- الحساب (يمين) -->
-        <div id="userMenu"></div>
+        <!-- اليسار: الحساب -->
+        <div id="authSlot" class="flex items-center">
+            <!-- سيتم حقن كود الحساب هنا عبر JS -->
+        </div>
     </nav>
 
     <main class="max-w-6xl mx-auto mt-24 text-center px-4 relative z-10">
         <h1 class="text-7xl font-black mb-16 leading-tight">تأمين المعاملات <br><span class="text-yellow-500">بالذكاء البرمجي</span></h1>
         
-        <div id="mainWallet" class="hidden mb-16">
-            <div class="hero-wallet">
-                <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-4">محفظة وساطة المعتمدة</p>
-                <div class="flex items-center justify-center gap-3 mb-10">
-                    <span class="text-8xl font-black text-yellow-500 tracking-tighter" id="valTxt">0.00</span>
-                    <span class="text-2xl text-gray-600 font-bold">SAR</span>
+        <!-- الرصيد المركزي -->
+        <div id="balanceView" class="hidden mb-16">
+            <div class="inline-block bg-gradient-to-b from-yellow-500/5 to-black/60 border border-white/5 p-12 rounded-[50px] max-w-full w-[500px]">
+                <p class="text-[10px] text-gray-500 uppercase tracking-[0.3em] mb-4">محفظة وساطة المعتمدة</p>
+                <div class="flex items-center justify-center gap-4 mb-10">
+                    <span class="text-7xl font-black text-yellow-500 tracking-tighter" id="valHero">0.00</span>
+                    <span class="text-xl text-gray-600 font-bold">SAR</span>
                 </div>
                 <div class="grid grid-cols-3 gap-3">
-                    <button onclick="showNotice()" class="bg-yellow-500 text-black py-4 rounded-2xl font-black text-xs hover:scale-105 transition shadow-lg shadow-yellow-500/20">إيداع</button>
-                    <button onclick="showNotice()" class="bg-white/5 py-4 rounded-2xl font-bold text-xs">سحب</button>
-                    <button onclick="showNotice()" class="bg-white/5 py-4 rounded-2xl font-bold text-xs">السجل</button>
+                    <button onclick="showNotice()" class="bg-yellow-500 text-black py-4 rounded-2xl font-black text-xs hover:scale-105 transition">إيداع</button>
+                    <button onclick="showNotice()" class="bg-white/5 py-4 rounded-2xl font-bold text-xs hover:bg-white/10 transition">سحب</button>
+                    <button onclick="showNotice()" class="bg-white/5 py-4 rounded-2xl font-bold text-xs hover:bg-white/10 transition">السجل</button>
                 </div>
             </div>
         </div>
 
-        <button onclick="location.href='ticket.html'" class="bg-yellow-500 text-black px-16 py-6 rounded-[2.5rem] font-black text-2xl transition-all hover:scale-110 shadow-2xl shadow-yellow-500/10">فتح تذكرة وساطة</button>
-        
-        <div class="mt-40 flex justify-center py-20 border-t border-white/5">
-            <img src="wsath.png" class="max-w-2xl w-full drop-shadow-[0_0_80px_rgba(234,179,8,0.1)] rounded-[3rem]">
+        <button onclick="location.href='ticket.html'" class="bg-yellow-500 text-black px-16 py-6 rounded-[2.5rem] font-black text-2xl hover:scale-105 transition shadow-[0_0_60px_rgba(234,179,8,0.2)]">فتح تذكرة وساطة</button>
+
+        <div class="mt-40 grid md:grid-cols-2 gap-20 items-center text-right py-24 border-t border-white/5">
+            <div>
+                <h2 class="text-4xl font-black text-yellow-500 mb-6">أمانك هو أولويتنا 🛡️</h2>
+                <p class="text-gray-400 text-xl leading-relaxed">
+                    من خلال منصة وساطة، نضمن لك الحماية الكاملة من الاحتيال. نحن هنا لنكون الطرف الثالث الموثوق لضمان حقوق كافة الأطراف.
+                </p>
+            </div>
+            <div class="bg-yellow-500/5 p-8 rounded-[3rem]">
+                <div class="text-8xl">🛡️</div>
+            </div>
         </div>
     </main>
 
@@ -120,34 +130,52 @@
         const firebaseConfig = { databaseURL: "https://wasata-af6ac-default-rtdb.europe-west1.firebasedatabase.app" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        const me = JSON.parse(localStorage.getItem('wasata_session'));
+        const user = JSON.parse(localStorage.getItem('wasata_session'));
 
         function init() {
-            const wrap = document.getElementById('userMenu');
-            if(me) {
-                document.getElementById('mainWallet').classList.remove('hidden');
-                wrap.innerHTML = `
-                    <div class="relative group cursor-pointer">
-                        <div class="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl text-xs font-black hover:bg-white/10 transition">
-                             ▼ ${me.email.split('@')[0]}
+            const slot = document.getElementById('authSlot');
+            if(user) {
+                document.getElementById('balanceView').classList.remove('hidden');
+                slot.innerHTML = `
+                    <div class="relative group dropdown-wrapper">
+                        <div class="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl text-xs font-black hover:bg-white/10 transition cursor-pointer">
+                             ▼ ${user.email.split('@')[0]} 
                         </div>
-                        <div class="dropdown-base account-pos">
-                            ${me.role === 'admin' ? '<button onclick="location.href=\'admin.html\'" class="text-yellow-500 font-black block w-full py-4 border-b border-white/5 text-right font-bold">⚙️ لوحة الإدارة</button>' : ''}
-                            <button onclick="location.href='ticket.html'" class="text-white block w-full py-4 border-b border-white/5 text-right font-bold">🎫 تذاكري</button>
-                            <button onclick="logout()" class="text-red-500 block w-full py-4 text-right font-bold">🚪 سحب الخروج</button>
+                        <div class="dropdown-custom auth-dropdown">
+                            ${user.role === 'admin' ? '<button onclick="location.href=\'admin.html\'" class="text-yellow-500 font-bold block w-full py-3 border-b border-white/5 text-right hover:pr-2 transition-all">لوحة الإدارة ⚙️</button>' : ''}
+                            <button onclick="location.href='ticket.html'" class="text-white block w-full py-3 border-b border-white/5 text-right hover:pr-2 transition-all">تذاكري 🎫</button>
+                            <button onclick="logout()" class="text-red-500 block w-full py-3 text-right hover:pr-2 transition-all">تسجيل الخروج 🚪</button>
                         </div>
                     </div>
                 `;
-                db.ref('wallets/' + me.email.replace(/\./g, '_')).on('value', s => {
-                    document.getElementById('valTxt').innerText = (s.val()?.balance || 0).toFixed(2);
-                });
+                loadData();
             } else {
-                wrap.innerHTML = `<button onclick="location.href='login.html'" class="bg-yellow-500 text-black px-8 py-3 rounded-xl font-black">الدخول</button>`;
+                slot.innerHTML = `<button onclick="location.href='login.html'" class="bg-yellow-500 text-black px-8 py-3 rounded-2xl font-black">الدخول</button>`;
             }
         }
 
-        function showNotice() { document.getElementById('alertOverlay').style.display = 'flex'; }
-        function closeNotice() { document.getElementById('alertOverlay').style.display = 'none'; }
+        function loadData() {
+            const uKey = user.email.replace(/\./g, '_');
+            db.ref('wallets/' + uKey).on('value', snap => {
+                document.getElementById('valHero').innerText = (snap.val()?.balance || 0).toFixed(2);
+            });
+            db.ref('notifications/' + uKey).limitToLast(5).on('value', snap => {
+                const list = document.getElementById('notifArea');
+                list.innerHTML = "";
+                let hasNotif = false;
+                snap.forEach(c => {
+                    hasNotif = true;
+                    const div = document.createElement('div');
+                    div.className = "p-3 bg-white/5 rounded-xl text-[10px] text-gray-400 border border-white/5 text-right";
+                    div.innerText = c.val().text;
+                    list.prepend(div);
+                });
+                document.getElementById('notifPing').style.display = hasNotif ? 'block' : 'none';
+            });
+        }
+
+        function showNotice() { document.getElementById('importantNotice').style.display = 'flex'; }
+        function closeNotice() { document.getElementById('importantNotice').style.display = 'none'; }
         function logout() { localStorage.removeItem('wasata_session'); location.reload(); }
 
         particlesJS("particles-js", { "particles": { "number": { "value": 40 }, "color": { "value": "#eab308" }, "opacity": { "value": 0.15 }, "size": { "value": 2 }, "line_linked": { "enable": true, "distance": 150, "color": "#eab308", "opacity": 0.1 } } });
