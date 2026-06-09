@@ -14,8 +14,8 @@
         #particles-js { position: fixed; width: 100%; height: 100%; z-index: -1; top: 0; left: 0; }
         .bg-dots { position: fixed; inset: 0; z-index: -2; background-image: radial-gradient(#ffffff08 1.5px, transparent 1.5px); background-size: 25px 25px; }
 
-        /* تعديل القوائم المنسدلة */
-        .dropdown-wrapper { position: relative; padding-bottom: 20px; margin-bottom: -20px; } /* مساحة ربط عشان ما تختفي القائمة */
+        /* تعديلات القوائم المنسدلة لضمان الثبات والظهور الصحيح */
+        .dropdown-wrapper { position: relative; padding-bottom: 15px; margin-bottom: -15px; }
         
         .dropdown-custom { 
             display: none; position: absolute; top: 100%; 
@@ -25,14 +25,13 @@
             margin-top: 5px;
         }
 
-        /* قائمة الجرس (اليمين) تفتح لليسار */
+        /* الجرس يفتح لليسار (لأنه على اليمين) */
         .notif-dropdown { right: 0; left: auto; }
-        /* قائمة الحساب (اليسار) تفتح لليمين */
+        /* الحساب يفتح لليمين (لأنه على اليسار) */
         .auth-dropdown { left: 0; right: auto; }
 
         .group:hover .dropdown-custom { display: block; }
 
-        /* نافذة التنبيه */
         .custom-overlay {
             display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92);
             backdrop-filter: blur(15px); z-index: 10000; align-items: center; justify-content: center;
@@ -51,14 +50,15 @@
     <div id="particles-js"></div>
     <div class="bg-dots"></div>
 
+    <!-- نافذة التنبيه -->
     <div id="importantNotice" class="custom-overlay">
         <div class="alert-card">
-            <h2 class="text-6xl mb-6">!</h2>
+            <h2 class="text-6xl mb-6 text-yellow-500">!</h2>
             <h3 class="text-3xl font-black mb-4">تنبيه هام!</h3>
             <p class="text-gray-400 leading-relaxed mb-8">
-                في وقت سابق وردتنا العديد من الشكاوي حول عمليات احتيال شائعة تتم عبر الواتساب مؤخراً يرجى الانتباه جيداً.
+                تجنب عمليات الاحتيال الشائعة عبر الواتساب. نحن هنا لنضمن حقك.
                 <br><br>
-                <span class="text-red-500 font-bold">لا تحاول تتخطى التنبيه لأنه ماراح يختفي الا اذا وافقت عليه</span>
+                <span class="text-red-500 font-bold">يجب الموافقة للاستمرار</span>
             </p>
             <button onclick="closeNotice()" class="w-full bg-white text-black py-4 rounded-2xl font-black hover:bg-gray-200 transition">فهمت ووافقت ✓</button>
         </div>
@@ -83,13 +83,11 @@
             </div>
         </div>
 
-        <!-- السنتر: الشعار -->
+        <!-- السنتر: الشعار النصي -->
         <div class="text-3xl font-black text-yellow-500 tracking-tighter">🛡️ وساطة <span class="text-[10px] opacity-20">V10</span></div>
 
         <!-- اليسار: الحساب -->
-        <div id="authSlot" class="flex items-center">
-            <!-- سيتم حقن كود الحساب هنا عبر JS -->
-        </div>
+        <div id="authSlot" class="flex items-center"></div>
     </nav>
 
     <main class="max-w-6xl mx-auto mt-24 text-center px-4 relative z-10">
@@ -113,15 +111,18 @@
 
         <button onclick="location.href='ticket.html'" class="bg-yellow-500 text-black px-16 py-6 rounded-[2.5rem] font-black text-2xl hover:scale-105 transition shadow-[0_0_60px_rgba(234,179,8,0.2)]">فتح تذكرة وساطة</button>
 
+        <!-- قسم الضمان مع استبدال الصورة المطلوبة -->
         <div class="mt-40 grid md:grid-cols-2 gap-20 items-center text-right py-24 border-t border-white/5">
             <div>
                 <h2 class="text-4xl font-black text-yellow-500 mb-6">أمانك هو أولويتنا 🛡️</h2>
                 <p class="text-gray-400 text-xl leading-relaxed">
-                    من خلال منصة وساطة، نضمن لك الحماية الكاملة من الاحتيال. نحن هنا لنكون الطرف الثالث الموثوق لضمان حقوق كافة الأطراف.
+                    نحن نعمل كطرف ثالث ذكي لضمان حقوق كافة الأطراف في الخدمات الرقمية. وداعاً لعمليات الاحتيال، وأهلاً بالموثوقية الكاملة.
                 </p>
             </div>
-            <div class="bg-yellow-500/5 p-8 rounded-[3rem]">
-                <div class="text-8xl">🛡️</div>
+            <!-- تم وضع صورتك هنا مع تأثير ظل ناعم -->
+            <div class="relative group">
+                <div class="absolute inset-0 bg-yellow-500/10 blur-[80px] rounded-full"></div>
+                <img src="wsath.png" class="relative w-full max-w-md mx-auto drop-shadow-[0_0_30px_rgba(234,179,8,0.2)] rounded-[3rem] transform hover:scale-105 transition duration-500">
             </div>
         </div>
     </main>
@@ -142,9 +143,9 @@
                              ▼ ${user.email.split('@')[0]} 
                         </div>
                         <div class="dropdown-custom auth-dropdown">
-                            ${user.role === 'admin' ? '<button onclick="location.href=\'admin.html\'" class="text-yellow-500 font-bold block w-full py-3 border-b border-white/5 text-right hover:pr-2 transition-all">لوحة الإدارة ⚙️</button>' : ''}
-                            <button onclick="location.href='ticket.html'" class="text-white block w-full py-3 border-b border-white/5 text-right hover:pr-2 transition-all">تذاكري 🎫</button>
-                            <button onclick="logout()" class="text-red-500 block w-full py-3 text-right hover:pr-2 transition-all">تسجيل الخروج 🚪</button>
+                            ${user.role === 'admin' ? '<button onclick="location.href=\'admin.html\'" class="text-yellow-500 font-bold block w-full py-3 border-b border-white/5 text-right hover:pr-3 transition-all">لوحة الإدارة ⚙️</button>' : ''}
+                            <button onclick="location.href='ticket.html'" class="text-white block w-full py-3 border-b border-white/5 text-right hover:pr-3 transition-all">تذاكري 🎫</button>
+                            <button onclick="logout()" class="text-red-500 block w-full py-3 text-right hover:pr-3 transition-all">تسجيل الخروج 🚪</button>
                         </div>
                     </div>
                 `;
