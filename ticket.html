@@ -1,3 +1,8 @@
+أبشر، تم تعديل كود التحرير (التذكرة) بحيث أزلت خيار "إيداع الرصيد" نهائياً، وأضفت وظيفة تجعل الرسالة تُرسل مباشرة عند الضغط على زر **Enter** في لوحة المفاتيح لتسهيل الدردشة.
+
+تفضل الكود المحدث بالكامل:
+
+```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -12,6 +17,9 @@
         .msg-admin { background: #1a1d2e; align-self: flex-start; border-right: 4px solid #eab308; }
         .msg-user { background: #eab308; color: black; align-self: flex-end; font-weight: bold; }
         .msg-system { background: rgba(255,255,255,0.02); align-self: center; font-size: 10px; color: #555; border: 1px dashed rgba(255,255,255,0.05); }
+        /* تحسين التمرير */
+        #messageList::-webkit-scrollbar { width: 5px; }
+        #messageList::-webkit-scrollbar-thumb { background: rgba(234, 179, 8, 0.2); border-radius: 10px; }
     </style>
 </head>
 <body class="flex flex-col h-screen">
@@ -22,17 +30,17 @@
             <div id="ticketStatus" class="text-[9px] text-yellow-500 font-bold px-2 py-1 bg-yellow-500/10 rounded uppercase">بانتظار الإدارة</div>
         </div>
         <div class="flex items-center gap-3">
-            <button onclick="depositDialog()" class="bg-green-500/10 text-green-500 text-[10px] px-3 py-1 rounded-lg font-bold border border-green-500/20 hover:bg-green-500/20 transition">إيداع رصيد +</button>
-            <div class="bg-white/5 px-3 py-1.5 rounded-xl flex items-center gap-2 text-xs">
-                <span id="miniBalance" class="font-black text-yellow-500">0.00</span>
+            <!-- تم إزالة زر الإيداع -->
+            <div class="bg-white/5 px-4 py-2 rounded-xl flex items-center gap-2 text-xs border border-white/5">
+                <span id="miniBalance" class="font-black text-yellow-500 text-sm">0.00</span>
                 <span class="text-gray-500 font-bold">SAR</span>
             </div>
         </div>
     </nav>
 
     <div class="flex-1 flex flex-col max-w-4xl mx-auto w-full p-4 overflow-hidden">
-        <!-- Setup Form: العميل يوصف طلبه فقط -->
-        <div id="setupForm" class="bg-[#111218] p-8 rounded-[2.5rem] border border-white/10 shadow-2xl">
+        <!-- Setup Form -->
+        <div id="setupForm" class="bg-[#111218] p-8 rounded-[2.5rem] border border-white/10 shadow-2xl mt-10">
             <h3 class="text-2xl font-black mb-6 text-center">فتح طلب وساطة</h3>
             <div class="space-y-4 text-right">
                 <div class="bg-black/50 p-4 rounded-xl border border-white/5">
@@ -55,7 +63,7 @@
 
             <div id="messageList" class="flex-1 overflow-y-auto p-6 flex flex-col gap-2"></div>
             
-            <!-- زر الدفع: يظهر فقط لما الوسيط يطلبه -->
+            <!-- زر الدفع -->
             <div id="paymentNotice" class="hidden p-5 bg-yellow-500/10 border-t border-yellow-500/20 items-center justify-between">
                 <div>
                     <p class="text-[10px] text-yellow-500 font-bold">طلب دفع من الوسيط</p>
@@ -64,9 +72,10 @@
                 <button onclick="goToPayment()" class="bg-yellow-500 text-black px-10 py-4 rounded-2xl font-black shadow-xl hover:bg-yellow-400 transition">إتمام المعاملة 💳</button>
             </div>
 
+            <!-- حقل الإدخال -->
             <div class="p-4 bg-black/40 flex gap-2">
-                <input id="userMsg" type="text" placeholder="اكتب للوسيط..." class="flex-1 bg-white/5 rounded-2xl px-5 py-4 outline-none border border-transparent focus:border-yellow-500">
-                <button onclick="sendMsg()" class="bg-yellow-500 text-black px-8 rounded-2xl font-black">←</button>
+                <input id="userMsg" type="text" onkeydown="handleEnter(event)" placeholder="اكتب للوسيط..." class="flex-1 bg-white/5 rounded-2xl px-5 py-4 outline-none border border-transparent focus:border-yellow-500">
+                <button onclick="sendMsg()" class="bg-yellow-500 text-black px-8 rounded-2xl font-black">إرسال</button>
             </div>
         </div>
     </div>
@@ -80,7 +89,6 @@
         let ticketData = null;
 
         function init() {
-            // تحديث الرصيد فوق
             db.ref('wallets/' + uKey).on('value', snap => {
                 document.getElementById('miniBalance').innerText = (snap.val()?.balance || 0).toFixed(2);
             });
@@ -94,7 +102,6 @@
                 document.getElementById('ticketStatus').innerText = ticketData.status;
                 document.getElementById('infoDetails').innerText = `المنتج: ${ticketData.product} | السعر: ${ticketData.amount || '--'} | الوساطة: ${ticketData.fee || '--'}`;
 
-                // عرض الرسائل
                 const list = document.getElementById('messageList');
                 list.innerHTML = "";
                 if(ticketData.messages) {
@@ -107,7 +114,6 @@
                     list.scrollTop = list.scrollHeight;
                 }
 
-                // إدارة زر الدفع
                 const pBox = document.getElementById('paymentNotice');
                 if(ticketData.action === 'showPay') {
                     pBox.classList.replace('hidden', 'flex');
@@ -116,6 +122,13 @@
                     pBox.classList.replace('flex', 'hidden');
                 }
             });
+        }
+
+        // إرسال عند ضغط Enter
+        function handleEnter(event) {
+            if (event.key === "Enter") {
+                sendMsg();
+            }
         }
 
         function startChat(isReturning = false) {
@@ -132,13 +145,6 @@
             }
         }
 
-        function depositDialog() {
-            const amount = prompt("أدخل المبلغ الذي تريد إيداعه في محفظتك (SAR):");
-            if(amount && !isNaN(amount)) {
-                location.href = `payment.html?type=deposit&total=${amount}&ticket=${uKey}`;
-            }
-        }
-
         function goToPayment() {
             const total = parseFloat(ticketData.amount) + parseFloat(ticketData.fee || 0);
             location.href = `payment.html?type=ticket&total=${total}&ticket=${uKey}`;
@@ -146,7 +152,7 @@
 
         function sendMsg() {
             const inp = document.getElementById('userMsg');
-            if(!inp.value) return;
+            if(!inp.value.trim()) return;
             db.ref('tickets/' + uKey + '/messages').push({
                 text: inp.value,
                 sender: 'user',
@@ -159,3 +165,4 @@
     </script>
 </body>
 </html>
+```
