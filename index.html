@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>وساطة | Wasata Elite v10 - المنصة الأضمن</title>
+    <title>وساطة | Wasata Elite v10</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
@@ -14,127 +14,93 @@
         #particles-js { position: fixed; width: 100%; height: 100%; z-index: -1; top: 0; left: 0; }
         .bg-dots { position: fixed; inset: 0; z-index: -2; background-image: radial-gradient(#ffffff08 1.5px, transparent 1.5px); background-size: 25px 25px; }
 
-        /* إصلاح قائمة الإشعارات لتفتح باتجاه اليسار وبشكل صحيح */
-        .notif-dropdown { 
-            display: none; position: absolute; top: 120%; left: 0; /* تم التعديل لليسار */
+        /* تعديلات القائمة المنسدلة - تفتح لليسار */
+        .dropdown-menu { 
+            display: none; position: absolute; top: 120%; left: 0; 
             background: #111218; border: 1px solid rgba(234, 179, 8, 0.2); 
-            border-radius: 20px; padding: 15px; min-width: 300px; 
-            box-shadow: 0 20px 60px rgba(0,0,0,0.9); z-index: 100;
+            border-radius: 18px; padding: 10px; min-width: 220px; 
+            box-shadow: 0 15px 50px rgba(0,0,0,0.8); z-index: 100;
         }
+        .user-nav:hover .dropdown-menu { display: block; }
 
-        /* الرصيد المركزي المطور */
-        .wallet-center-main {
+        /* الرصيد المركزي */
+        .wallet-center-card {
             background: linear-gradient(180deg, rgba(234,179,8,0.05) 0%, rgba(0,0,0,0.8) 100%);
             border: 1px solid rgba(255,255,255,0.05);
-            backdrop-filter: blur(30px);
+            backdrop-filter: blur(25px);
             padding: 50px 30px;
             border-radius: 40px;
-            max-width: 550px;
+            max-width: 520px;
             margin: 0 auto;
             position: relative;
-            box-shadow: 0 40px 100px rgba(0,0,0,0.5);
         }
 
-        /* نافذة الرسالة/التنبيه المخصصة */
-        .custom-alert {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9);
-            backdrop-filter: blur(10px); z-index: 2000; align-items: center; justify-content: center;
-        }
-        .alert-box {
-            background: #111218; border: 1px solid #333; border-radius: 30px;
-            padding: 40px; max-width: 450px; width: 90%; text-align: center;
-            box-shadow: 0 0 50px rgba(234,179,8,0.1);
-        }
-
-        .notif-dot { width: 10px; height: 10px; background: #ef4444; border-radius: 50%; position: absolute; top: 0px; right: 0px; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { transform: scale(0.9); } 50% { transform: scale(1.1); } 100% { transform: scale(0.9); } }
+        .notif-dot { width: 8px; height: 8px; background: #ef4444; border-radius: 50%; position: absolute; top: 0; right: 0; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
 </head>
 <body class="min-h-screen">
     <div id="particles-js"></div>
     <div class="bg-dots"></div>
 
-    <!-- نافذة التنبيه الهام (أول دخول أو عند محاولة الإيداع) -->
-    <div id="importantAlert" class="custom-alert">
-        <div class="alert-box">
-            <span class="text-5xl text-yellow-500 mb-4 block">⚠️</span>
-            <h3 class="text-2xl font-black mb-4">تنبيه أمني هام!</h3>
-            <p class="text-gray-400 text-sm leading-relaxed mb-8">
-                في وساطة، نطبق أقصى معايير الحماية. نظام الإيداع المباشر مفعل <span class="text-yellow-500">للأعضاء المميزين</span> فقط. <br><br>
-                إذا كنت مستخدماً جديداً، يرجى التوجه لفتح تذكرة أولاً وإتمام عملية (شراء/بيع) لتفعيل محفظتك بالكامل.
-            </p>
-            <button onclick="closeAlert()" class="bg-white text-black px-10 py-3 rounded-xl font-black hover:scale-105 transition">فهمت ووافقت ✓</button>
-        </div>
-    </div>
-
     <!-- Navigation -->
-    <nav class="p-6 flex justify-between items-center bg-black/50 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
+    <nav class="p-6 flex justify-between items-center bg-black/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
         <div class="flex items-center gap-4">
-            <div id="userTools" class="hidden flex gap-3">
-                 <!-- الجرس المصلح -->
-                 <div class="relative group cursor-pointer" onclick="toggleMenu('notifDropdown')">
-                    <div class="bg-white/5 p-3 rounded-2xl hover:bg-white/10 transition">
-                        <span class="text-xl">🔔</span>
-                        <div id="notifDot" class="notif-dot" style="display: none;"></div>
-                    </div>
-                    <div id="notifDropdown" class="notif-dropdown">
-                        <p class="text-[10px] text-gray-500 font-bold mb-4 border-b border-white/5 pb-2">التنبيهات الأخيرة</p>
-                        <div id="notifList" class="space-y-3 max-h-60 overflow-y-auto"></div>
-                    </div>
+             <!-- قائمة التنبيهات المصلحة -->
+             <div class="relative group cursor-pointer user-nav">
+                <div class="bg-white/5 p-3 rounded-2xl hover:bg-white/10 transition">
+                    <span class="text-xl">🔔</span>
+                    <div id="notifDot" class="notif-dot" style="display: none;"></div>
                 </div>
-                <!-- أيقونة الرسائل -->
-                <div class="bg-white/5 p-3 rounded-2xl hover:bg-white/10 transition cursor-pointer" onclick="showAlert()">
-                    <span class="text-xl">💬</span>
+                <!-- Dropdown يفتح لليسار -->
+                <div class="dropdown-menu">
+                    <p class="text-[10px] text-gray-500 font-bold mb-4 border-b border-white/5 pb-2">التنبيهات</p>
+                    <div id="notifList" class="space-y-2 max-h-60 overflow-y-auto">
+                        <p class="text-[9px] text-center text-gray-600">لا توجد تنبيهات جديدة</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="text-2xl font-black text-yellow-500">🛡️ وساطة <span class="text-[10px] opacity-20 uppercase">V10</span></div>
+        <div class="text-2xl font-black text-yellow-500 tracking-tighter">🛡️ وساطة <span class="text-[10px] opacity-30">V10</span></div>
 
-        <div id="authContainer"></div>
+        <div id="userInfoPlaceholder" class="flex items-center gap-3">
+            <!-- سيتم حقن معلومات المستخدم هنا -->
+        </div>
     </nav>
 
-    <main class="max-w-6xl mx-auto mt-20 text-center px-4 relative z-10">
-        <h1 class="text-6xl font-black mb-16 leading-tight">تأمين المعاملات <br><span class="text-yellow-500 animate-pulse">بالذكاء البرمجي</span></h1>
+    <main class="max-w-6xl mx-auto mt-24 text-center px-4 relative z-10">
+        <h1 class="text-6xl font-black mb-16 leading-tight">تأمين المعاملات <br><span class="text-yellow-500">بالذكاء البرمجي</span></h1>
         
-        <!-- المحفظة المركزية (توسيط الرصيد) -->
-        <div id="walletDisplay" class="hidden mb-16">
-            <div class="wallet-center-main">
-                <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-4">إجمالي الرصيد المتاح</p>
-                <div class="flex items-center justify-center gap-4 mb-10">
-                    <span class="text-7xl font-black text-yellow-500 tracking-tighter" id="heroBal">0.00</span>
+        <!-- المحفظة المركزية -->
+        <div id="walletBox" class="hidden mb-16">
+            <div class="wallet-center-card">
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-4">محفظة وساطة المعتمدة</p>
+                <div class="flex items-center justify-center gap-3 mb-10">
+                    <span class="text-7xl font-black text-yellow-500 tracking-tighter" id="mainBal">0.00</span>
                     <span class="text-2xl text-gray-600 font-bold">SAR</span>
                 </div>
                 <div class="grid grid-cols-3 gap-3">
-                    <button onclick="showAlert()" class="bg-yellow-500 text-black py-4 rounded-2xl font-black text-xs hover:scale-105 transition">إيداع</button>
-                    <button onclick="showAlert()" class="bg-white/5 py-4 rounded-2xl font-bold text-xs hover:bg-white/10 transition">سحب</button>
-                    <button onclick="showAlert()" class="bg-white/5 py-4 rounded-2xl font-bold text-xs hover:bg-white/10 transition">السجل</button>
+                    <button onclick="alert('يرجى فتح تذكرة لتفعيل الإيداع')" class="bg-yellow-500 text-black py-4 rounded-2xl font-black text-xs hover:scale-105 transition shadow-lg shadow-yellow-500/20">إيداع</button>
+                    <button class="bg-white/5 py-4 rounded-2xl font-bold text-xs hover:bg-white/10 transition">سحب</button>
+                    <button class="bg-white/5 py-4 rounded-2xl font-bold text-xs hover:bg-white/10 transition">السجل</button>
                 </div>
             </div>
         </div>
 
-        <button onclick="location.href='ticket.html'" class="bg-yellow-500 text-black px-16 py-5 rounded-[2.5rem] font-black text-2xl hover:scale-110 transition shadow-[0_0_60px_rgba(234,179,8,0.2)]">فتح تذكرة وساطة</button>
-
-        <!-- قسم الضمان المطور (wsath.png مع كلام إيجابي) -->
-        <div class="mt-40 grid md:grid-cols-2 gap-16 items-center text-right py-24 border-t border-white/5">
+        <button onclick="location.href='ticket.html'" class="bg-yellow-500 text-black px-12 py-5 rounded-[2.5rem] font-black text-2xl hover:scale-105 transition">فتح تذكرة وساطة</button>
+        
+        <!-- قسم الضمان -->
+        <div class="mt-40 grid md:grid-cols-2 gap-16 items-center text-right py-20 border-t border-white/5">
             <div>
-                <h2 class="text-4xl font-black text-yellow-500 mb-6">ثقتك هي رأس مالنا 🤝</h2>
-                <p class="text-gray-400 text-lg leading-relaxed mb-6">
-                    من خلال "وساطة v10"، نضمن لك أن كل معاملة تتم هي معاملة تحت الرقابة الأمنية المشددة. نحن نحمي حقوق المبرمجين، أصحاب السيرفرات، والديسكورد بشكل استثنائي.
+                <h2 class="text-4xl font-black text-yellow-500 mb-6">ضمانك وأمانك 🤝</h2>
+                <p class="text-gray-400 text-lg leading-relaxed">
+                    من خلال "وساطة v10"، نضمن لك حماية كاملة من عمليات الاحتيال وتشفير بياناتك المالية. محفظتنا المعتمدة تضمن وصول كل هللة إلى صاحبها.
                 </p>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5 text-center">
-                        <span class="text-yellow-500 font-black text-2xl">100%</span>
-                        <p class="text-[10px] text-gray-500">حماية من الاحتيال</p>
-                    </div>
-                </div>
             </div>
-            <div class="relative">
-                <img src="wsath.png" class="w-full drop-shadow-[0_0_80px_rgba(234,179,8,0.1)] rounded-[3rem]">
-                <div class="absolute -bottom-6 -right-6 bg-yellow-500 text-black p-6 rounded-3xl font-black rotate-3">ضمان وساطة المعتمد ✓</div>
-            </div>
+            <img src="wsath.png" class="w-full drop-shadow-[0_0_80px_rgba(234,179,8,0.1)] rounded-[3rem]">
         </div>
-    </main>
+    </nav>
 
     <script>
         const firebaseConfig = { databaseURL: "https://wasata-af6ac-default-rtdb.europe-west1.firebasedatabase.app" };
@@ -143,51 +109,39 @@
         const user = JSON.parse(localStorage.getItem('wasata_session'));
 
         function init() {
-            const auth = document.getElementById('authContainer');
+            const authHole = document.getElementById('userInfoPlaceholder');
             if(user) {
-                document.getElementById('userTools').classList.remove('hidden');
-                document.getElementById('walletDisplay').classList.remove('hidden');
-                auth.innerHTML = `
-                    <div class="bg-white/5 border border-white/10 px-4 py-2 rounded-xl text-xs font-black">
-                        ${user.email.split('@')[0]}
+                document.getElementById('walletBox').classList.remove('hidden');
+                
+                // حقن معلومات المستخدم مع القائمة المنسدلة المصلحة
+                authHole.innerHTML = `
+                    <div class="relative user-nav cursor-pointer">
+                        <div class="bg-white/5 border border-white/10 px-5 py-2.5 rounded-xl text-xs font-black hover:bg-white/10 transition">
+                            ${user.email.split('@')[0]} ▼
+                        </div>
+                        <div class="dropdown-menu">
+                            ${user.role === 'admin' ? '<button onclick="location.href=\'admin.html\'" class="text-yellow-500 font-bold block w-full py-3 border-b border-white/5 text-right">لوحة الإدارة ⚙️</button>' : ''}
+                            <button onclick="location.href='ticket.html'" class="text-white block w-full py-3 border-b border-white/5 text-right">تذاكري 🎫</button>
+                            <button onclick="logout()" class="text-red-500 block w-full py-3 text-right">تسجيل الخروج 🚪</button>
+                        </div>
                     </div>
                 `;
-                loadData();
+                loadWallet();
             } else {
-                auth.innerHTML = `<button onclick="location.href='login.html'" class="bg-yellow-500 text-black px-6 py-2 rounded-xl font-black">دخول</button>`;
+                authHole.innerHTML = `<button onclick="location.href='login.html'" class="bg-yellow-500 text-black px-6 py-2 rounded-xl font-black">تسجيل الدخول</button>`;
             }
         }
 
-        function loadData() {
+        function loadWallet() {
             const uKey = user.email.replace(/\./g, '_');
             db.ref('wallets/' + uKey).on('value', snap => {
-                document.getElementById('heroBal').innerText = (snap.val()?.balance || 0).toFixed(2);
-            });
-            // لود التنبيهات
-            db.ref('notifications/' + uKey).limitToLast(5).on('value', snap => {
-                const list = document.getElementById('notifList');
-                list.innerHTML = "";
-                let count = 0;
-                snap.forEach(c => {
-                    count++;
-                    const div = document.createElement('div');
-                    div.className = "p-3 bg-white/5 rounded-xl text-[10px] text-gray-400";
-                    div.innerText = c.val().text;
-                    list.prepend(div);
-                });
-                document.getElementById('notifDot').style.display = count > 0 ? "block" : "none";
+                document.getElementById('mainBal').innerText = (snap.val()?.balance || 0).toFixed(2);
             });
         }
 
-        function toggleMenu(id) {
-            const el = document.getElementById(id);
-            el.style.display = el.style.display === 'block' ? 'none' : 'block';
-        }
-
-        function showAlert() { document.getElementById('importantAlert').style.display = 'flex'; }
-        function closeAlert() { document.getElementById('importantAlert').style.display = 'none'; }
-
-        particlesJS("particles-js", { "particles": { "number": { "value": 50 }, "color": { "value": "#eab308" }, "opacity": { "value": 0.2 }, "size": { "value": 2 }, "line_linked": { "enable": true, "distance": 150, "color": "#eab308", "opacity": 0.1 } } });
+        function logout() { localStorage.removeItem('wasata_session'); location.reload(); }
+        
+        particlesJS("particles-js", { "particles": { "number": { "value": 40 }, "color": { "value": "#eab308" }, "opacity": { "value": 0.1 }, "size": { "value": 2 }, "line_linked": { "enable": true, "distance": 150, "color": "#eab308", "opacity": 0.05 } } });
         init();
     </script>
 </body>
