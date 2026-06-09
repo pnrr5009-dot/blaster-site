@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>وساطة | Wasata Elite v10 - المنصة المعتمدة</title>
+    <title>وساطة | Wasata Elite v10 - المنصة الأضمن</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
@@ -14,96 +14,113 @@
         #particles-js { position: fixed; width: 100%; height: 100%; z-index: -1; top: 0; left: 0; }
         .bg-dots { position: fixed; inset: 0; z-index: -2; background-image: radial-gradient(#ffffff08 1.5px, transparent 1.5px); background-size: 25px 25px; }
 
-        .dropdown { display: none; position: absolute; top: 110%; left: 0; background: #111218; border: 1px solid #333; border-radius: 12px; padding: 10px; min-width: 200px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 100; }
+        /* تعديلات الدروب داون لتفتح لليسار */
+        .dropdown { 
+            display: none; position: absolute; top: 110%; left: 0; 
+            background: #111218; border: 1px solid #333; border-radius: 12px; 
+            padding: 10px; min-width: 250px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); z-index: 100; 
+        }
         .user-nav:hover .dropdown { display: block; }
-        
-        .feature-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); transition: 0.3s; }
-        .feature-card:hover { background: rgba(234, 179, 8, 0.03); border-color: rgba(234, 179, 8, 0.2); transform: translateY(-5px); }
-        
-        .step-num { width: 30px; height: 30px; background: #eab308; color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-bottom: 10px; }
 
-        .wallet-card {
-            background: linear-gradient(135deg, rgba(234,179,8,0.1), rgba(234,179,8,0.02));
-            border: 1px solid rgba(234,179,8,0.2);
-            backdrop-filter: blur(20px);
+        /* تنسيق الرصيد المركزي */
+        .wallet-center {
+            background: linear-gradient(135deg, rgba(234,179,8,0.15), rgba(0,0,0,0.4));
+            border: 1px solid rgba(234,179,8,0.3);
+            backdrop-filter: blur(25px);
+            padding: 40px;
+            border-radius: 40px;
+            box-shadow: 0 0 80px rgba(234,179,8,0.05);
+            max-width: 500px;
+            margin: 0 auto;
             position: relative;
-            overflow: hidden;
         }
 
-        .notification-dot { width: 8px; height: 8px; background: #ef4444; border-radius: 50%; position: absolute; top: -2px; right: -2px; animation: pulse-dot 2s infinite; }
+        .notification-dot { 
+            width: 10px; height: 10px; background: #ef4444; border-radius: 50%; 
+            position: absolute; top: -2px; right: -2px; animation: pulse-dot 2s infinite; 
+        }
         @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 1000; align-items: center; justify-content: center; }
         .modal-overlay.active { display: flex; }
-        .modal-content { background: #111218; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 30px; max-width: 500px; width: 90%; }
     </style>
 </head>
 <body class="min-h-screen">
     <div id="particles-js"></div>
     <div class="bg-dots"></div>
 
+    <!-- Navigation -->
     <nav class="p-6 flex justify-between items-center bg-black/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
-        <div class="text-2xl font-black text-yellow-500 tracking-tighter">🛡️ وساطة <span class="text-[10px] opacity-20 uppercase">v10</span></div>
         <div class="flex items-center gap-4">
-            <div id="walletBadge" class="hidden cursor-pointer" onclick="openWalletModal()">
-                <div class="wallet-card px-4 py-2 rounded-xl flex items-center gap-2 text-sm">
-                    <span>💰</span>
-                    <span id="walletBalance" class="font-black text-yellow-500">0.00</span>
-                    <span class="text-[10px] text-gray-500 font-bold">SAR</span>
-                </div>
-            </div>
-            <!-- Notifications Bell -->
+             <!-- قائمة التنبيهات مع إصلاح الاتجاه -->
             <div id="notifBell" class="hidden relative cursor-pointer" onclick="toggleNotifications()">
-                <div class="bg-white/5 p-2 rounded-xl hover:bg-white/10 transition relative">
+                <div class="bg-white/5 p-3 rounded-2xl hover:bg-white/10 transition relative">
                     <span class="text-xl">🔔</span>
                     <div id="notifDot" class="notification-dot" style="display: none;"></div>
                 </div>
-                <div id="notifDropdown" class="dropdown" style="left: auto; right: 0; min-width: 320px; display: none;">
-                    <div id="notifList" class="max-h-60 overflow-y-auto"></div>
+                <div id="notifDropdown" class="dropdown" style="left: 0; right: auto; text-align: right;">
+                    <p class="text-[10px] text-gray-500 font-bold mb-3 border-b border-white/5 pb-2">صندوق الوارد والمعاملات 📥</p>
+                    <div id="notifList" class="max-h-80 overflow-y-auto space-y-2"></div>
                 </div>
             </div>
-            <div id="authContainer" class="relative user-nav flex gap-3"></div>
+            <!-- زر الرسائل الخاصة -->
+            <div id="pmButton" class="hidden relative cursor-pointer" onclick="location.href='messages.html'">
+                <div class="bg-white/5 p-3 rounded-2xl hover:bg-white/10 transition">
+                    <span class="text-xl">💬</span>
+                </div>
+            </div>
         </div>
+
+        <div class="text-2xl font-black text-yellow-500 tracking-tighter">🛡️ وساطة <span class="text-[10px] opacity-30">V10</span></div>
+
+        <div id="authContainer" class="relative user-nav flex gap-3"></div>
     </nav>
 
     <main class="max-w-6xl mx-auto mt-20 text-center px-4 relative z-10">
-        <h1 class="text-7xl font-black mb-8 leading-tight">تأمين المعاملات <br><span class="text-yellow-500 tracking-tighter animate-pulse">بالذكاء البرمجي</span></h1>
+        <h1 class="text-6xl font-black mb-12 leading-tight">تأمين المعاملات <br><span class="text-yellow-500 tracking-tighter">بالذكاء البرمجي</span></h1>
         
-        <div id="walletSection" class="hidden mt-12 max-w-sm mx-auto">
-            <div class="wallet-card p-6 rounded-[2rem]">
-                <div class="flex justify-between items-start mb-6">
-                    <div class="text-right">
-                        <p class="text-[10px] text-gray-500 uppercase font-bold">محفظة وساطة</p>
-                        <p class="text-3xl font-black text-yellow-500"><span id="walletBalanceHero">0.00</span> <span class="text-sm">SAR</span></p>
+        <!-- المحفظة المركزية (الرصيد في النص) -->
+        <div id="walletSection" class="hidden mb-16">
+            <div class="wallet-center">
+                <p class="text-xs text-yellow-500/60 font-bold uppercase tracking-[0.3em] mb-4">محفظة وساطة المعتمدة</p>
+                <div class="flex flex-col items-center justify-center">
+                    <div class="flex items-baseline gap-3">
+                        <span class="text-2xl text-gray-500 font-bold">SAR</span>
+                        <span id="walletBalanceHero" class="text-7xl font-black text-yellow-500 tracking-tighter">0.00</span>
                     </div>
                 </div>
-                <div class="flex gap-2">
-                    <button onclick="openDepositModal()" class="flex-1 bg-yellow-500/10 text-yellow-500 py-3 rounded-xl font-bold text-xs border border-yellow-500/20">إيداع</button>
-                    <button onclick="alert('خدمة السحب متاحة بعد تأكيد الهوية 🛡️')" class="flex-1 bg-white/5 py-3 rounded-xl font-bold text-xs">سحب</button>
-                    <button onclick="openTxHistory()" class="flex-1 bg-white/5 py-3 rounded-xl font-bold text-xs">السجل</button>
+                <div class="grid grid-cols-3 gap-4 mt-8">
+                    <button onclick="openDepositModal()" class="bg-yellow-500 text-black py-4 rounded-2xl font-black text-sm hover:scale-105 transition shadow-lg shadow-yellow-500/20">إيداع</button>
+                    <button onclick="alert('يجب تقديم طلب سحب عبر التذكرة 🛡️')" class="bg-white/5 py-4 rounded-2xl font-bold text-sm hover:bg-white/10 transition">سحب</button>
+                    <button onclick="openTxHistory()" class="bg-white/5 py-4 rounded-2xl font-bold text-sm hover:bg-white/10 transition">السجل</button>
                 </div>
             </div>
         </div>
 
-        <div id="actionButtons" class="mt-12 flex justify-center gap-4">
-            <button onclick="location.href='ticket.html'" class="bg-yellow-500 text-black px-12 py-5 rounded-[2rem] font-black text-2xl hover:scale-105 transition shadow-2xl shadow-yellow-500/30">فتح تذكرة وساطة</button>
+        <div id="actionButtons" class="mb-32">
+            <button onclick="location.href='ticket.html'" class="bg-yellow-500 text-black px-20 py-6 rounded-[2.5rem] font-black text-3xl hover:scale-110 transition shadow-[0_0_50px_rgba(234,179,8,0.3)]">فتح تذكرة وساطة</button>
         </div>
 
-        <div class="mt-40 grid md:grid-cols-3 gap-6 text-right">
-             <div class="feature-card p-8 rounded-3xl">
-                <div class="text-4xl mb-4">🛡️</div>
-                <h3 class="text-xl font-bold mb-3">وساطة آمنة</h3>
-                <p class="text-gray-500 text-sm">أموالك محفوظة بشكل آمن لدى الوسيط العادل حتى يؤكد الطرفان إتمام المعاملة بنجاح.</p>
+        <!-- قسم الضمان مع صورة wsath.png -->
+        <div class="mt-40 grid md:grid-cols-2 gap-20 items-center text-right py-20 border-t border-white/5">
+            <div>
+                <h2 class="text-4xl font-black text-yellow-500 mb-6">ضمانك حقنا وأماننا 🛡️</h2>
+                <p class="text-gray-400 text-xl leading-relaxed mb-8">
+                    في "وساطة"، لا نكتفي بكوننا وسيطاً، بل نحن حائط الصد الأول لحماية أموالك وجهدك. نستخدم أنظمة تشفير عسكرية لضمان أن كل هللة تصل لصاحبها الحقيقي.
+                </p>
+                <div class="space-y-4">
+                    <div class="flex items-center gap-4 bg-green-500/5 p-4 rounded-2xl border border-green-500/20">
+                        <span class="text-2xl">✅</span>
+                        <p class="font-bold text-green-500">حماية كاملة من عمليات الاحتيال (Scam Protection)</p>
+                    </div>
+                    <div class="flex items-center gap-4 bg-blue-500/5 p-4 rounded-2xl border border-blue-500/20">
+                        <span class="text-2xl">💎</span>
+                        <p class="font-bold text-blue-500">دعم فني متخصص للفصل في نزاعات البرمجيات</p>
+                    </div>
+                </div>
             </div>
-            <div class="feature-card p-8 rounded-3xl border-yellow-500/20">
-                <div class="text-4xl mb-4">👑</div>
-                <h3 class="text-xl font-bold mb-3">وسطاء موثوقون</h3>
-                <p class="text-gray-500 text-sm">وسطاء محترفون يشرفون على كل معاملة لضمان العدالة وحل النزاعات البرمجية.</p>
-            </div>
-            <div class="feature-card p-8 rounded-3xl">
-                <div class="text-4xl mb-4">📈</div>
-                <h3 class="text-xl font-bold mb-3">تتبع المعاملات</h3>
-                <p class="text-gray-500 text-sm">راقب جميع معاملاتك مع تحديثات مفصلة للحالة وسجل كامل لعمليات الدفع والتسليم.</p>
+            <div class="relative">
+                <img src="wsath.png" alt="Wasata Protection" class="w-full drop-shadow-[0_0_100px_rgba(234,179,8,0.15)] rounded-3xl">
             </div>
         </div>
     </main>
@@ -111,7 +128,7 @@
     <!-- Modals -->
     <div id="txModal" class="modal-overlay" onclick="closeModal(event, 'txModal')">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <h3 class="text-xl font-black text-yellow-500 mb-6">📋 سجل المعاملات المالية</h3>
+            <h3 class="text-xl font-black text-yellow-500 mb-6">📋 السجل المالي</h3>
             <div id="txFullList" class="space-y-3 max-h-80 overflow-y-auto"></div>
         </div>
     </div>
@@ -125,75 +142,78 @@
         function initUI() {
             const authContainer = document.getElementById('authContainer');
             if (currentUser) {
-                document.getElementById('walletBadge').classList.remove('hidden');
                 document.getElementById('notifBell').classList.remove('hidden');
+                document.getElementById('pmButton').classList.remove('hidden');
                 document.getElementById('walletSection').classList.remove('hidden');
                 
                 authContainer.innerHTML = `
-                    <div class="cursor-pointer bg-yellow-500 text-black px-4 py-2 rounded-xl text-xs font-black">
+                    <div class="cursor-pointer bg-white/5 border border-white/10 text-white px-5 py-3 rounded-2xl text-xs font-black hover:bg-white/10 transition">
                         @${currentUser.email.split('@')[0]} ▼
-                        <div class="dropdown text-right">
-                            <button onclick="location.href='ticket.html'" class="text-white font-bold block w-full py-2 border-b border-white/5">تذكرتي 🎫</button>
-                            <button onclick="logout()" class="text-red-500 font-bold block w-full py-2">خروج</button>
+                        <div class="dropdown">
+                            ${currentUser.role === 'admin' ? '<button onclick="location.href=\'admin.html\'" class="text-yellow-500 font-bold block w-full py-3 border-b border-white/5">لوحة الإدارة ⚙️</button>' : ''}
+                            <button onclick="location.href='ticket.html'" class="text-white block w-full py-3 border-b border-white/5">تذاكري 🎫</button>
+                            <button onclick="logout()" class="text-red-500 block w-full py-3">تسجيل الخروج</button>
                         </div>
                     </div>
                 `;
                 loadWallet();
+                loadNotifications();
             } else {
-                authContainer.innerHTML = `<button onclick="location.href='login.html'" class="text-xs bg-yellow-500 text-black px-6 py-2 rounded-xl font-black">تسجيل الدخول</button>`;
+                authContainer.innerHTML = `<button onclick="location.href='login.html'" class="bg-yellow-500 text-black px-8 py-3 rounded-2xl font-black">ابدأ الآن 🚀</button>`;
             }
-        }
-
-        // التحقق من الإيداع (الطلب الأساسي)
-        function openDepositModal() {
-            // فحص سجل التذاكر للتأكد من وجود معاملة ناجحة واحدة على الأقل
-            db.ref('tickets').orderByChild('userEmail').equalTo(currentUser.email).once('value', (snap) => {
-                let canDeposit = false;
-                snap.forEach(child => {
-                    if (child.val().status === 'تم بنجاح ✓') canDeposit = true;
-                });
-
-                if (canDeposit) {
-                    const amount = prompt("أدخل المبلغ المراد إيداعه (SAR):");
-                    if (amount && !isNaN(amount)) {
-                        const uKey = currentUser.email.replace(/\./g, '_');
-                        location.href = `payment.html?type=deposit&total=${amount}&ticket=${uKey}`;
-                    }
-                } else {
-                    alert("⚠️ عذراً: نظام المنصة يمنع الإيداع المباشر للمستخدمين الجدد. لا يمكن إيداع أي مبلغ إلا بعد إتمام أول عملية شراء أو بيع ناجحة عبر نظام تذاكر وساطة.");
-                }
-            });
         }
 
         function loadWallet() {
             const uKey = currentUser.email.replace(/\./g, '_');
             db.ref('wallets/' + uKey).on('value', snap => {
                 const bal = snap.val()?.balance || 0;
-                document.getElementById('walletBalance').innerText = bal.toFixed(2);
                 document.getElementById('walletBalanceHero').innerText = bal.toFixed(2);
             });
         }
 
-        function openTxHistory() {
-            document.getElementById('txModal').classList.add('active');
+        function openDepositModal() {
+            db.ref('tickets').orderByChild('userEmail').equalTo(currentUser.email).once('value', (snap) => {
+                let canDeposit = false;
+                snap.forEach(child => { if (child.val().status === 'تم بنجاح ✓') canDeposit = true; });
+
+                if (canDeposit) {
+                    const amount = prompt("أدخل مبلغ الإيداع (SAR):");
+                    if (amount && !isNaN(amount)) {
+                        location.href = `payment.html?type=deposit&total=${amount}&ticket=${currentUser.email.replace(/\./g, '_')}`;
+                    }
+                } else {
+                    alert("⚠️ تنبيه أمني: لا يمكن الإيداع المباشر حالياً. نظام 'وساطة' يتطلب إتمام أول عملية (شراء أو بيع) عبر التذاكر أولاً لتفعيل المحفظة بالكامل.");
+                }
+            });
+        }
+
+        function toggleNotifications() {
+            const d = document.getElementById('notifDropdown');
+            d.style.display = d.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function loadNotifications() {
             const uKey = currentUser.email.replace(/\./g, '_');
-            db.ref('transactions/' + uKey).orderByChild('timestamp').limitToLast(10).on('value', snap => {
-                const list = document.getElementById('txFullList');
+            db.ref('notifications/' + uKey).limitToLast(10).on('value', snap => {
+                const list = document.getElementById('notifList');
                 list.innerHTML = "";
-                snap.forEach(child => {
-                    const tx = child.val();
+                let hasUnread = false;
+                snap.forEach(c => {
+                    const n = c.val();
+                    if(!n.read) hasUnread = true;
                     const div = document.createElement('div');
-                    div.className = "bg-white/5 p-3 rounded-xl flex justify-between items-center text-xs";
-                    div.innerHTML = `<span>${tx.type === 'deposit' ? '💰 إيداع' : '💸 سحب/دفع'}</span><span class="font-black text-yellow-500">${tx.amount} SAR</span>`;
-                    list.appendChild(div);
+                    div.className = `p-3 rounded-xl mb-2 text-xs ${n.read ? 'opacity-40' : 'bg-yellow-500/10 border border-yellow-500/20'}`;
+                    div.innerText = n.text;
+                    list.prepend(div);
                 });
+                document.getElementById('notifDot').style.display = hasUnread ? 'block' : 'none';
             });
         }
 
         function closeModal(e, id) { if(e.target.id === id) document.getElementById(id).classList.remove('active'); }
         function logout() { localStorage.removeItem('wasata_session'); location.reload(); }
         
-        particlesJS("particles-js", { "particles": { "number": { "value": 80 }, "color": { "value": "#eab308" }, "opacity": { "value": 0.2 }, "size": { "value": 2 }, "line_linked": { "enable": true, "distance": 150, "color": "#eab308", "opacity": 0.1 } } });
+        particlesJS("particles-js", { "particles": { "number": { "value": 60 }, "color": { "value": "#eab308" }, "opacity": { "value": 0.2 }, "size": { "value": 2 }, "line_linked": { "enable": true, "distance": 150, "color": "#eab308", "opacity": 0.1 } } });
         initUI();
     </script>
 </body>
