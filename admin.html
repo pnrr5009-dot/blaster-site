@@ -2,21 +2,67 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>لوحة التحكم | Wasata Admin v9.5</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>لوحة التحكم | Wasata Admin v9.6</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body { background: #0a0b10; color: white; font-family: sans-serif; overflow: hidden; height: 100vh; }
-        .ticket-item { transition: 0.2s; background: rgba(255,255,255,0.02); margin-bottom: 8px; border-radius: 12px; cursor: pointer; border-right: 4px solid transparent; }
-        .ticket-item.active { background: #1a1d2e; border-right-color: #eab308; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #0a0b10;
+            color: white;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        /* ===== Ticket Items ===== */
+        .ticket-item {
+            transition: 0.2s;
+            background: rgba(255,255,255,0.02);
+            margin-bottom: 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            border-right: 4px solid transparent;
+            position: relative;
+        }
+        .ticket-item:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        .ticket-item.active {
+            background: #1a1d2e !important;
+            border-right-color: #eab308;
+        }
         .ticket-item.pending { border-right-color: #eab308; }
         .ticket-item.completed { border-right-color: #22c55e; }
         .ticket-item.refunded { border-right-color: #ef4444; }
+
+        /* Checkbox overlay for selection mode */
+        .ticket-checkbox {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: none;
+            width: 18px;
+            height: 18px;
+            accent-color: #eab308;
+            cursor: pointer;
+            z-index: 5;
+        }
+        .selection-mode .ticket-checkbox { display: block; }
+        .selection-mode .ticket-item { padding-right: 12px; }
+        .ticket-item.selected {
+            background: rgba(234,179,8,0.08) !important;
+            border: 1px solid rgba(234,179,8,0.2);
+        }
+
+        /* ===== Scrollbar ===== */
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
 
+        /* ===== Admin Cards ===== */
         .admin-card {
             background: rgba(255,255,255,0.02);
             border: 1px solid rgba(255,255,255,0.05);
@@ -26,6 +72,7 @@
             border-color: rgba(234,179,8,0.2);
         }
 
+        /* ===== Modals ===== */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -48,27 +95,63 @@
             overflow-y: auto;
         }
 
-        .stat-box {
+        /* ===== Stats ===== */
+        .stat-box { transition: 0.3s; }
+        .stat-box:hover { transform: translateY(-2px); }
+
+        /* ===== Messages ===== */
+        .msg-bubble {
+            max-width: 85%;
+            animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== Buttons ===== */
+        .btn-glow {
             transition: 0.3s;
         }
-        .stat-box:hover {
-            transform: translateY(-2px);
+        .btn-glow:hover {
+            filter: brightness(1.2);
+            box-shadow: 0 0 20px rgba(234,179,8,0.15);
+        }
+
+        /* ===== Delete mode bar ===== */
+        .delete-bar {
+            display: none;
+        }
+        .delete-bar.active { display: flex; }
+
+        /* ===== Real-time fee calc ===== */
+        #calcSellerAmount {
+            transition: 0.3s;
+        }
+
+        /* Responsive tweaks */
+        @media (max-width: 768px) {
+            aside { width: 100% !important; }
+            .flex-1.overflow-hidden { flex-direction: column; }
         }
     </style>
 </head>
 <body class="flex flex-col">
+
+    <!-- ===== NAVBAR ===== -->
     <nav class="bg-[#111218] p-4 border-b border-white/5 flex justify-between items-center shadow-2xl">
         <div class="flex items-center gap-4">
-            <h1 class="text-xl font-black text-yellow-500">⚙️ وساطة الإدارية <span class="text-[10px] opacity-30">v9.5</span></h1>
+            <h1 class="text-xl font-black text-yellow-500">⚙️ وساطة الإدارية <span class="text-[10px] opacity-30">v9.6</span></h1>
             <span class="text-[10px] bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded-full">مرحباً أيها الوسيط</span>
         </div>
         <div class="flex gap-2">
+            <button onclick="toggleSelectionMode()" id="selectToggleBtn" class="text-xs bg-purple-500/10 text-purple-500 px-3 py-1.5 rounded-xl hover:bg-purple-500/20 transition">☑️ تحديد</button>
             <button onclick="openSettings()" class="text-xs bg-white/5 text-white px-3 py-1.5 rounded-xl hover:bg-white/10 transition">⚙️ الإعدادات</button>
             <button onclick="location.href='index.html'" class="text-xs bg-red-500/10 text-red-500 px-3 py-1.5 rounded-xl hover:bg-red-500/20 transition">خروج</button>
         </div>
     </nav>
 
-    <!-- Stats Bar -->
+    <!-- ===== STATS BAR ===== -->
     <div class="bg-[#111218]/50 px-4 py-2 border-b border-white/5">
         <div class="flex gap-3 text-[10px]">
             <div class="stat-box bg-yellow-500/10 px-3 py-1.5 rounded-lg">
@@ -86,8 +169,17 @@
         </div>
     </div>
 
+    <!-- ===== DELETE BAR (ظهور عند تفعيل التحديد) ===== -->
+    <div id="deleteBar" class="delete-bar bg-red-500/10 px-4 py-2 border-b border-red-500/20 items-center justify-between">
+        <span id="selectedCount" class="text-xs text-gray-300">0 تذكرة محددة</span>
+        <button onclick="deleteSelectedTickets()" class="bg-red-500 text-white px-4 py-1.5 rounded-xl text-xs font-bold hover:bg-red-600 transition">🗑️ حذف المحدد</button>
+        <button onclick="toggleSelectionMode()" class="text-xs text-gray-400 hover:text-white transition">إلغاء</button>
+    </div>
+
+    <!-- ===== MAIN LAYOUT ===== -->
     <div class="flex flex-1 overflow-hidden">
-        <!-- Sidebar - Ticket List -->
+
+        <!-- ===== SIDEBAR - TICKET LIST ===== -->
         <aside class="w-80 bg-[#111218] border-l border-white/5 flex flex-col">
             <div class="p-3 border-b border-white/5">
                 <input type="text" id="searchTickets" placeholder="🔍 بحث عن تذكرة..." class="w-full bg-black/50 border border-white/5 rounded-xl px-3 py-2 text-xs outline-none focus:border-yellow-500/30">
@@ -97,11 +189,23 @@
             </div>
         </aside>
 
-        <!-- Main Area -->
+        <!-- ===== MAIN AREA ===== -->
         <main class="flex-1 flex flex-col bg-[#05060b]">
+
+            <!-- No Ticket Selected -->
+            <div id="noTicket" class="flex-1 flex items-center justify-center">
+                <div class="text-center opacity-30">
+                    <div class="text-5xl mb-4">📋</div>
+                    <div class="font-bold">يرجى اختيار تذكرة من القائمة</div>
+                    <div class="text-xs text-gray-500 mt-2">أو أنشئ تذكرة جديدة من الموقع الرئيسي</div>
+                </div>
+            </div>
+
+            <!-- Chat Area -->
             <div id="chatArea" class="hidden flex-1 flex flex-col overflow-hidden">
+
                 <!-- Ticket Info Header -->
-                <div class="p-4 bg-white/5 border-b border-white/5 flex justify-between items-center">
+                <div class="p-4 bg-[#111218]/80 border-b border-white/5 flex justify-between items-center">
                     <div>
                         <span id="activeUser" class="font-black text-yellow-500 font-mono">@user</span>
                         <span id="ticketInfoSmall" class="text-[10px] text-gray-500 block mt-0.5">المنتج: — | المبلغ: — | رسوم الوساطة: —</span>
@@ -123,30 +227,24 @@
                 
                 <!-- Action Buttons Bar -->
                 <div id="actionBar" class="px-4 py-2 bg-[#111218]/80 border-t border-white/5 flex gap-2 flex-wrap">
-                    <button onclick="updateTicket('pay')" class="bg-yellow-500/20 text-yellow-500 px-3 py-1.5 rounded-xl font-bold text-[10px] hover:bg-yellow-500/30 transition">💳 طلب دفع</button>
-                    <button onclick="openRefundModal()" class="bg-red-500/20 text-red-500 px-3 py-1.5 rounded-xl font-bold text-[10px] hover:bg-red-500/30 transition">↩️ إعادة مبلغ</button>
-                    <button onclick="updateTicket('complete')" class="bg-green-500/20 text-green-500 px-3 py-1.5 rounded-xl font-bold text-[10px] hover:bg-green-500/30 transition">✅ إتمام المعاملة</button>
-                    <button onclick="openEditTicketModal()" class="bg-blue-500/20 text-blue-500 px-3 py-1.5 rounded-xl font-bold text-[10px] hover:bg-blue-500/30 transition">✏️ تعديل التذكرة</button>
+                    <button onclick="updateTicket('pay')" class="btn-glow bg-yellow-500/20 text-yellow-500 px-3 py-1.5 rounded-xl font-bold text-[10px] hover:bg-yellow-500/30 transition">💳 طلب دفع</button>
+                    <button onclick="openRefundModal()" class="btn-glow bg-red-500/20 text-red-500 px-3 py-1.5 rounded-xl font-bold text-[10px] hover:bg-red-500/30 transition">↩️ إعادة مبلغ</button>
+                    <button onclick="updateTicket('complete')" class="btn-glow bg-green-500/20 text-green-500 px-3 py-1.5 rounded-xl font-bold text-[10px] hover:bg-green-500/30 transition">✅ إتمام المعاملة</button>
+                    <button onclick="openEditTicketModal()" class="btn-glow bg-blue-500/20 text-blue-500 px-3 py-1.5 rounded-xl font-bold text-[10px] hover:bg-blue-500/30 transition">✏️ تعديل التذكرة</button>
                 </div>
                 
-                <!-- Chat Input -->
+                <!-- Chat Input (يدعم Enter) -->
                 <div class="p-4 bg-[#111218] border-t border-white/5 flex gap-2">
-                    <input id="adminMsg" type="text" placeholder="اكتب ردك..." class="flex-1 bg-black border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-yellow-500/30">
-                    <button onclick="updateTicket('send')" class="bg-yellow-500 text-black px-6 rounded-xl font-black text-sm hover:bg-yellow-400 transition">إرسال</button>
-                </div>
-            </div>
-            
-            <div id="noTicket" class="flex-1 flex items-center justify-center">
-                <div class="text-center opacity-30">
-                    <div class="text-5xl mb-4">📋</div>
-                    <div class="font-bold">يرجى اختيار تذكرة من القائمة</div>
-                    <div class="text-xs text-gray-500 mt-2">أو أنشئ تذكرة جديدة من الموقع الرئيسي</div>
+                    <input id="adminMsg" type="text" placeholder="اكتب ردك... (Enter للإرسال)" 
+                           class="flex-1 bg-black border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-yellow-500/30"
+                           onkeydown="if(event.key==='Enter'){event.preventDefault();updateTicket('send');}">
+                    <button onclick="updateTicket('send')" class="bg-yellow-500 text-black px-6 rounded-xl font-black text-sm hover:bg-yellow-400 transition btn-glow">إرسال</button>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Refund Modal -->
+    <!-- ===== REFUND MODAL ===== -->
     <div id="refundModal" class="modal-overlay" onclick="closeModal(event, 'refundModal')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center mb-6">
@@ -170,7 +268,7 @@
         </div>
     </div>
 
-    <!-- Edit Ticket Modal -->
+    <!-- ===== EDIT TICKET MODAL ===== -->
     <div id="editTicketModal" class="modal-overlay" onclick="closeModal(event, 'editTicketModal')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center mb-6">
@@ -184,11 +282,11 @@
                 </div>
                 <div>
                     <p class="text-xs text-gray-500 mb-2">مبلغ المعاملة (SAR)</p>
-                    <input type="number" id="editAmount" class="w-full bg-black border border-white/10 rounded-xl p-4 text-lg font-black outline-none text-yellow-500">
+                    <input type="number" id="editAmount" class="w-full bg-black border border-white/10 rounded-xl p-4 text-lg font-black outline-none text-yellow-500" oninput="calculateSellerAmount()">
                 </div>
                 <div>
                     <p class="text-xs text-gray-500 mb-2">رسوم الوساطة (MiddleMan Fee) - SAR</p>
-                    <input type="number" id="editFee" value="15" class="w-full bg-black border border-white/10 rounded-xl p-4 text-lg font-black outline-none text-yellow-500">
+                    <input type="number" id="editFee" value="15" class="w-full bg-black border border-white/10 rounded-xl p-4 text-lg font-black outline-none text-yellow-500" oninput="calculateSellerAmount()">
                     <p class="text-[10px] text-gray-600 mt-1">💡 هذه الرسوم تُخصم من المبلغ الإجمالي وتذهب للمنصة</p>
                 </div>
                 <div>
@@ -200,7 +298,7 @@
         </div>
     </div>
 
-    <!-- Settings Modal -->
+    <!-- ===== SETTINGS MODAL ===== -->
     <div id="settingsModal" class="modal-overlay" onclick="closeModal(event, 'settingsModal')">
         <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 600px;">
             <div class="flex justify-between items-center mb-6">
@@ -282,10 +380,88 @@
         let selectedData = null;
         let adminUser = JSON.parse(localStorage.getItem('wasata_session'));
 
-        // ========== TICKET LIST ==========
+        // ===== SELECTION MODE STATE =====
+        let selectionMode = false;
+        let selectedKeys = new Set();
 
+        // ===== TOGGLE SELECTION MODE =====
+        function toggleSelectionMode() {
+            selectionMode = !selectionMode;
+            const sidebar = document.getElementById('ticketList');
+            const deleteBar = document.getElementById('deleteBar');
+            const btn = document.getElementById('selectToggleBtn');
+            
+            if (selectionMode) {
+                sidebar.classList.add('selection-mode');
+                deleteBar.classList.add('active');
+                btn.textContent = '❌ إلغاء التحديد';
+                btn.className = 'text-xs bg-red-500/10 text-red-500 px-3 py-1.5 rounded-xl hover:bg-red-500/20 transition';
+            } else {
+                sidebar.classList.remove('selection-mode');
+                deleteBar.classList.remove('active');
+                btn.textContent = '☑️ تحديد';
+                btn.className = 'text-xs bg-purple-500/10 text-purple-500 px-3 py-1.5 rounded-xl hover:bg-purple-500/20 transition';
+                selectedKeys.clear();
+                document.querySelectorAll('.ticket-item').forEach(el => el.classList.remove('selected'));
+                updateSelectedCount();
+            }
+        }
+
+        function toggleTicketSelection(key, event) {
+            if (!selectionMode) {
+                // Normal click behavior
+                return;
+            }
+            event.stopPropagation();
+            const el = event.currentTarget;
+            
+            if (selectedKeys.has(key)) {
+                selectedKeys.delete(key);
+                el.classList.remove('selected');
+                el.querySelector('.ticket-checkbox').checked = false;
+            } else {
+                selectedKeys.add(key);
+                el.classList.add('selected');
+                el.querySelector('.ticket-checkbox').checked = true;
+            }
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            document.getElementById('selectedCount').innerText = selectedKeys.size + ' تذكرة محددة';
+        }
+
+        function deleteSelectedTickets() {
+            if (selectedKeys.size === 0) {
+                alert('❌ لم تختر أي تذكرة');
+                return;
+            }
+            
+            if (!confirm(`⚠️ هل أنت متأكد من حذف ${selectedKeys.size} تذكرة؟ هذا الإجراء لا يمكن التراجع عنه.`)) {
+                return;
+            }
+            
+            let deleted = 0;
+            let errors = 0;
+            
+            selectedKeys.forEach(key => {
+                db.ref('tickets/' + key).remove()
+                    .then(() => { deleted++; })
+                    .catch(() => { errors++; });
+            });
+            
+            alert(`✅ تم حذف ${deleted} تذكرة بنجاح` + (errors ? `\n❌ فشل حذف ${errors} تذكرة` : ''));
+            
+            // Clear selection
+            selectedKeys.clear();
+            document.querySelectorAll('.ticket-item').forEach(el => el.classList.remove('selected'));
+            toggleSelectionMode(); // Exit selection mode
+        }
+
+        // ===== TICKET LIST =====
         db.ref('tickets').on('value', (snapshot) => {
             const list = document.getElementById('ticketList');
+            const h3 = list.querySelector('h3');
             list.innerHTML = '<h3 class="text-[10px] text-gray-500 font-bold uppercase mb-3 px-2">التذاكر النشطة</h3>';
             
             let activeCount = 0;
@@ -308,11 +484,26 @@
                 const statusClass = data.status && data.status.includes('تم بنجاح') ? 'completed' : 
                                    data.status && data.status.includes('ملغي') ? 'refunded' : 'pending';
                 div.className = `ticket-item p-4 ${statusClass} ${selectedKey === key ? 'active' : ''}`;
-                div.onclick = () => selectUser(key, data);
+                
+                // Add checkbox for selection mode
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'ticket-checkbox';
+                checkbox.onclick = (e) => e.stopPropagation();
+                
+                div.appendChild(checkbox);
+                
+                div.onclick = (e) => {
+                    if (selectionMode) {
+                        toggleTicketSelection(key, e);
+                    } else {
+                        selectUser(key, data);
+                    }
+                };
                 
                 const feeBadge = data.fee ? `<span class="text-[9px] text-yellow-500">رسوم: ${data.fee} SAR</span>` : '';
                 
-                div.innerHTML = `
+                div.innerHTML += `
                     <div class="flex justify-between items-start">
                         <div class="font-black text-xs text-white">@${data.userEmail ? data.userEmail.split('@')[0] : 'مجهول'}</div>
                         <span class="text-[9px] px-1.5 py-0.5 rounded-full ${
@@ -332,8 +523,7 @@
             document.getElementById('totalFees').innerText = totalFees.toFixed(2) + ' SAR';
         });
 
-        // ========== SELECT TICKET ==========
-
+        // ===== SELECT TICKET =====
         function selectUser(key, data) {
             selectedKey = key;
             selectedData = data;
@@ -357,9 +547,11 @@
                 snap.forEach((m) => {
                     const msg = m.val();
                     const div = document.createElement('div');
-                    div.className = `p-3 rounded-2xl max-w-[85%] ${msg.sender === 'admin' ? 'bg-yellow-500/10 mr-auto border border-yellow-500/20' : 'bg-white/5 ml-auto'}`;
+                    div.className = `msg-bubble p-3 rounded-2xl ${msg.sender === 'admin' ? 'bg-yellow-500/10 mr-auto border border-yellow-500/20' : msg.sender === 'system' ? 'bg-blue-500/5 mx-auto text-center border border-blue-500/10' : 'bg-white/5 ml-auto'}`;
+                    div.style.maxWidth = msg.sender === 'system' ? '70%' : '85%';
                     div.innerHTML = `
                         ${msg.sender === 'admin' ? '<span class="text-[9px] font-black text-yellow-500 block mb-1">🛡️ وساطة</span>' : ''}
+                        ${msg.sender === 'system' ? '<span class="text-[9px] font-black text-blue-400 block mb-1">⚙️ النظام</span>' : ''}
                         <p class="text-sm">${msg.text}</p>
                         <span class="text-[9px] text-gray-600 block mt-1">${msg.time || ''}</span>
                     `;
@@ -369,8 +561,7 @@
             });
         }
 
-        // ========== TICKET ACTIONS ==========
-
+        // ===== TICKET ACTIONS =====
         function updateTicket(type) {
             if(!selectedKey) return;
             const ref = db.ref('tickets/' + selectedKey);
@@ -385,12 +576,12 @@
                     });
                 }
                 document.getElementById('adminMsg').value = "";
+                document.getElementById('adminMsg').focus();
                 
             } else if(type === 'status') {
                 const newStatus = document.getElementById('admStatus').value;
                 ref.update({ status: newStatus });
                 
-                // Add system message
                 ref.child('messages').push({
                     text: '📌 تغيرت حالة التذكرة إلى: ' + newStatus,
                     sender: 'system',
@@ -405,7 +596,6 @@
                     time: new Date().toLocaleTimeString('ar-SA')
                 });
                 
-                // Notify user
                 const uKey = selectedData.userEmail.replace(/\./g, '_');
                 db.ref('notifications/' + uKey).push({
                     text: '💳 طلب دفع جديد للتذكرة - المبلغ: ' + (selectedData.amount || '?') + ' SAR',
@@ -416,7 +606,6 @@
                 });
                 
             } else if(type === 'complete') {
-                // Complete the transaction: release funds to seller
                 if (!selectedData.amount || !selectedData.userEmail) {
                     alert('❌ بيانات التذكرة غير مكتملة');
                     return;
@@ -426,8 +615,6 @@
                 const fee = parseFloat(selectedData.fee) || 0;
                 const sellerAmount = amount - fee;
                 
-                // Add to seller's wallet if we know who the seller is
-                // For now, we complete the status
                 ref.update({ 
                     status: 'تم بنجاح ✓',
                     completedAt: Date.now(),
@@ -441,7 +628,6 @@
                     time: new Date().toLocaleTimeString('ar-SA')
                 });
                 
-                // Notify user
                 const uKey = selectedData.userEmail.replace(/\./g, '_');
                 db.ref('notifications/' + uKey).push({
                     text: '✅ تم إتمام معاملتك بنجاح! شكراً لاستخدام وساطة.',
@@ -452,19 +638,10 @@
                 });
                 
                 document.getElementById('admStatus').value = 'تم بنجاح ✓';
-                
-            } else if(type === 'deliver') {
-                ref.update({ status: 'قيد التسليم' });
-                ref.child('messages').push({
-                    text: '📦 يرجى تسليم المنتج/الخدمة للعميل.',
-                    sender: 'admin',
-                    time: new Date().toLocaleTimeString('ar-SA')
-                });
             }
         }
 
-        // ========== REFUND FUNCTION ==========
-
+        // ===== REFUND FUNCTION (محدثة) =====
         function openRefundModal() {
             if (!selectedData) { alert('الرجاء اختيار تذكرة أولاً'); return; }
             document.getElementById('refundAmount').value = selectedData.amount || 0;
@@ -512,15 +689,16 @@
             // 4. Send notification to user with ticket link
             db.ref('notifications/' + uKey).push({
                 text: '✅ تم إعادة ' + amount.toFixed(2) + ' SAR إلى محفظتك (التذكرة ملغاة)',
+                details: 'تم إعادة المبلغ إلى محفظتك. يمكنك مراجعة تفاصيل التذكرة من لوحة التحكم.',
                 type: 'refund',
                 ticketKey: selectedKey,
                 read: false,
                 timestamp: Date.now()
             });
             
-            // 5. Send message in ticket
+            // 5. Send message in ticket (يظهر للعميل لما يرجع للتذكرة)
             db.ref('tickets/' + selectedKey + '/messages').push({
-                text: '↩️ تم إعادة المبلغ (' + amount.toFixed(2) + ' SAR) إلى محفظة العميل. سبب الإلغاء: ' + reason,
+                text: '↩️ تم إعادة المبلغ (' + amount.toFixed(2) + ' SAR) إلى محفظتك. سبب الإلغاء: ' + reason,
                 sender: 'system',
                 time: new Date().toLocaleTimeString('ar-SA')
             });
@@ -529,8 +707,7 @@
             document.getElementById('refundModal').classList.remove('active');
         }
 
-        // ========== EDIT TICKET ==========
-
+        // ===== EDIT TICKET =====
         function openEditTicketModal() {
             if (!selectedData) { alert('الرجاء اختيار تذكرة أولاً'); return; }
             
@@ -541,13 +718,6 @@
             calculateSellerAmount();
             document.getElementById('editTicketModal').classList.add('active');
         }
-
-        // Calculate seller amount in real-time
-        document.addEventListener('input', function(e) {
-            if (e.target.id === 'editAmount' || e.target.id === 'editFee') {
-                calculateSellerAmount();
-            }
-        });
 
         function calculateSellerAmount() {
             const amount = parseFloat(document.getElementById('editAmount').value) || 0;
@@ -573,14 +743,12 @@
             
             db.ref('tickets/' + selectedKey).update(updates);
             
-            // System message
             db.ref('tickets/' + selectedKey + '/messages').push({
                 text: '📝 تم تحديث التذكرة: المنتج: ' + product + ' | المبلغ: ' + amount + ' SAR | رسوم الوساطة: ' + (fee || 0) + ' SAR',
                 sender: 'system',
                 time: new Date().toLocaleTimeString('ar-SA')
             });
             
-            // Notify user
             if (selectedData && selectedData.userEmail) {
                 const uKey = selectedData.userEmail.replace(/\./g, '_');
                 db.ref('notifications/' + uKey).push({
@@ -596,10 +764,8 @@
             document.getElementById('editTicketModal').classList.remove('active');
         }
 
-        // ========== SETTINGS ==========
-
+        // ===== SETTINGS =====
         function openSettings() {
-            // Load current settings
             db.ref('platformSettings').once('value', (snap) => {
                 const settings = snap.val() || {};
                 document.getElementById('settingsFeePercent').value = settings.feePercent || 2.5;
@@ -610,21 +776,17 @@
                 document.getElementById('settingsExpiry').value = settings.expiryHours || 72;
             });
             
-            // Load stats
             loadPlatformStats();
-            
             document.getElementById('settingsModal').classList.add('active');
         }
 
         function loadPlatformStats() {
-            // Count users
             db.ref('wallets').once('value', (snap) => {
                 let count = 0;
                 snap.forEach(() => count++);
                 document.getElementById('statUsers').innerText = count;
             });
             
-            // Count transactions
             let totalTx = 0;
             let totalFees = 0;
             let totalRefunded = 0;
@@ -658,8 +820,7 @@
             alert('✅ تم حفظ إعدادات المنصة');
         }
 
-        // ========== HELPERS ==========
-
+        // ===== HELPERS =====
         function closeModal(event, modalId) {
             const modal = document.getElementById(modalId);
             if (event.target === modal || event.target.classList.contains('modal-overlay')) {
@@ -667,7 +828,17 @@
             }
         }
 
-        // ========== CHECK ADMIN ==========
+        // ===== FOCUS INPUT ON CHAT OPEN =====
+        // Auto-focus on message input when a ticket is selected
+        const observer = new MutationObserver(() => {
+            const chatArea = document.getElementById('chatArea');
+            if (!chatArea.classList.contains('hidden')) {
+                setTimeout(() => document.getElementById('adminMsg').focus(), 100);
+            }
+        });
+        observer.observe(document.getElementById('chatArea'), { attributes: true, attributeFilter: ['class'] });
+
+        // ===== CHECK ADMIN =====
         if (!adminUser || adminUser.role !== 'admin') {
             alert('❌ غير مصرح لك بالدخول. يجب أن تكون أدمن.');
             location.href = 'index.html';
