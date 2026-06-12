@@ -2,199 +2,180 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>PHANTOM ADMIN | Wasata Premium v10.5</title>
+    <title>لوحة التحكم | Wsata Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --primary: #fbbf24; --bg-main: #06070a; --bg-side: #0b0c14; --card-bg: rgba(255,255,255,0.02); }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root { --wsata-gold: #fbbf24; --wsata-purple: #a855f7; --wsata-green: #22c55e; --wsata-red: #ef4444; }
+        body { background: #08090f; color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; height: 100vh; }
         
-        /* استعادة شكل الماوس الأصلي */
-        body { 
-            background: var(--bg-main); 
-            color: white; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            overflow: hidden; 
-            height: 100vh;
-            cursor: default !important; /* شكل الماوس العادي */
-        }
-
-        .glass-nav { background: rgba(11, 12, 20, 0.8); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .sidebar { background: var(--bg-side); border-left: 1px solid rgba(255,255,255,0.05); }
+        .ws-nav { background: rgba(13, 14, 23, 0.9); border-bottom: 2px solid var(--wsata-gold); }
+        .ws-card { background: rgba(255,255,255,0.02); border: 2px solid rgba(255,255,255,0.05); transition: 0.3s; position: relative; }
         
-        .ticket-item {
-            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            background: var(--card-bg);
-            margin: 8px; border-radius: 12px; position: relative;
-            border: 1px solid rgba(255,255,255,0.05); overflow: hidden;
-        }
-        .ticket-item:hover { background: rgba(255,255,255,0.05); transform: scale(1.02); }
-        .ticket-item.active { background: #121421 !important; border-color: var(--primary); }
+        /* حالات ألوان الإطار */
+        .border-yellow { border-color: var(--wsata-gold) !important; }
+        .border-purple { border-color: var(--wsata-purple) !important; }
+        .border-green { border-color: var(--wsata-green) !important; }
+        .border-red { border-color: var(--wsata-red) !important; }
+        
+        .ws-active { background: #131524 !important; }
 
-        .ticket-checkbox {
-            position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-            width: 18px; height: 18px; display: none; accent-color: var(--primary); z-index: 10;
-        }
-        .selection-mode .ticket-checkbox { display: block; }
-        .ticket-item.selected { background: rgba(251, 191, 36, 0.1) !important; border: 1px solid var(--primary); }
-
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-left: 6px; }
-        .st-new { background: #fbbf24; box-shadow: 0 0 10px #fbbf24; }
-        .st-done { background: #22c55e; box-shadow: 0 0 10px #22c55e; }
-
-        .msg-bubble { max-width: 80%; padding: 12px; border-radius: 15px; font-size: 14px; margin-bottom: 8px; }
-        .msg-admin { background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.2); margin-right: auto; }
+        .msg-bubble { max-width: 80%; padding: 10px 15px; border-radius: 12px; margin-bottom: 8px; font-size: 14px; position: relative; }
+        .msg-admin { background: rgba(251, 191, 36, 0.1); border: 1px solid var(--wsata-gold); margin-right: auto; }
         .msg-user { background: rgba(255,255,255,0.05); margin-left: auto; }
         
-        .btn-mm { padding: 8px 16px; border-radius: 10px; font-weight: bold; font-size: 11px; transition: 0.3s; cursor: pointer; }
-        .btn-primary { background: var(--primary); color: black; }
-        .btn-danger { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+        .verified-badge { background: #1d4ed8; color: white; font-size: 9px; padding: 1px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 2px; font-weight: bold; }
+        
+        .btn-ws { font-weight: 800; border-radius: 8px; transition: 0.3s; cursor: pointer; font-size: 12px; }
+        .btn-ws:hover { transform: translateY(-1px); filter: brightness(1.1); }
 
-        #deleteBar { display: none; background: #ef444415; border-bottom: 1px solid #ef444430; }
-        .selection-mode-active #deleteBar { display: flex; }
-
-        /* مودال تعديل السعر */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center; }
-        .modal-content { background: #11121d; padding: 25px; border-radius: 20px; border: 1px solid #333; width: 350px; }
+        .sidebar { background: #0b0c14; border-left: 1px solid rgba(255,255,255,0.05); }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; }
     </style>
 </head>
 <body class="flex flex-col">
 
-    <nav class="glass-nav p-4 flex justify-between items-center z-50">
-        <div class="flex items-center gap-4">
-            <div class="w-10 h-10 bg-yellow-500 rounded-xl flex items-center justify-center text-black font-black">W</div>
-            <h1 class="font-black text-lg">PHANTOM ADMIN <span class="text-yellow-500">v10.5</span></h1>
+    <!-- NAVBAR -->
+    <nav class="ws-nav p-4 flex justify-between items-center shadow-xl">
+        <div class="flex items-center gap-3">
+            <div class="text-2xl font-black text-yellow-500">Wsata</div>
+            <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">النظام الإداري</span>
         </div>
         <div class="flex gap-3">
-            <button onclick="toggleSelectionMode()" id="selBtn" class="btn-mm bg-white/5 border border-white/10">🔘 التحديد المتعدد</button>
-            <button onclick="location.href='index.html'" class="btn-mm btn-danger">خروج</button>
+            <button onclick="toggleSelectionMode()" class="bg-white/5 border border-white/10 px-4 py-2 rounded-lg text-xs">تحديد تكتات</button>
+            <button onclick="location.href='index.html'" class="bg-red-500/10 text-red-500 border border-red-500/20 px-4 py-2 rounded-lg text-xs font-bold">خروج</button>
         </div>
     </nav>
 
-    <div id="deleteBar" class="px-6 py-3 items-center justify-between">
-        <div class="flex items-center gap-4">
-            <span id="selectedCount" class="text-xs font-bold text-red-400">0 تذاكر مختارة</span>
-            <button onclick="selectAllTickets()" class="text-[10px] bg-white/10 px-3 py-1 rounded-md hover:bg-white/20">تحديد الكل (Select All)</button>
-        </div>
-        <button onclick="deleteSelectedTickets()" class="btn-mm btn-danger !bg-red-600 !text-white">🗑️ حذف نهائي</button>
-    </div>
-
     <div class="flex flex-1 overflow-hidden">
+        <!-- Sidebar -->
         <aside class="sidebar w-80 flex flex-col">
-            <div id="ticketList" class="flex-1 overflow-y-auto px-2 py-4"></div>
+            <div class="p-4 border-b border-white/5">
+                <input type="text" id="search" placeholder="🔍 ابحث عن تذكرة..." class="w-full bg-black border border-white/10 p-3 text-xs rounded-xl outline-none focus:border-yellow-500 transition">
+            </div>
+            <div id="ticketList" class="flex-1 overflow-y-auto p-2"></div>
         </aside>
 
-        <main class="flex-1 flex flex-col bg-[#05060a]">
-            <div id="noTicket" class="flex-1 flex items-center justify-center opacity-20">بانتظار اختيار تذكرة</div>
+        <!-- Main Workspace -->
+        <main class="flex-1 flex flex-col relative bg-[#05060b]">
+            <div id="noTicket" class="absolute inset-0 flex items-center justify-center opacity-20 font-bold text-lg">بانتظار اختيار تذكرة للبدء</div>
 
             <div id="chatArea" class="hidden flex-1 flex flex-col overflow-hidden">
-                <div class="p-4 bg-white/5 border-b border-white/5 flex justify-between items-center">
+                <header class="p-4 bg-white/5 border-b border-white/5 flex justify-between items-center">
                     <div>
-                        <h3 id="activeUser" class="font-black text-yellow-500">#Ticket</h3>
-                        <p id="ticketDetails" class="text-[10px] text-gray-500 font-mono"></p>
-                    </div>
-                </div>
-
-                <div id="messageDisplay" class="flex-1 overflow-y-auto p-6 flex flex-col gap-2"></div>
-
-                <div class="p-4 bg-black border-t border-white/5">
-                    <div class="flex gap-2 mb-4">
-                        <button onclick="openEditModal()" class="btn-mm bg-blue-500/10 text-blue-500 border border-blue-500/20">✏️ تعديل السعر والبيانات</button>
-                        <button onclick="updateTicket('pay')" class="btn-mm bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">💳 طلب دفع</button>
+                        <h2 id="activeUser" class="font-black text-yellow-500 text-lg">#----</h2>
+                        <p id="ticketInfo" class="text-[11px] text-gray-500 font-bold mt-1"></p>
                     </div>
                     <div class="flex gap-2">
-                        <input id="adminMsg" type="text" placeholder="اكتب ردك..." class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-yellow-500">
-                        <button onclick="updateTicket('send')" class="btn-primary px-8 rounded-xl font-black">إرسال</button>
+                        <select id="admStatus" onchange="updateStatusManual()" class="bg-black text-[11px] border border-white/20 p-2 rounded-lg font-bold text-yellow-500 outline-none">
+                            <option value="بانتظار الاستلام">بانتظار الاستلام (إطار أصفر)</option>
+                            <option value="تم الاستلام">تم الاستلام (إطار بنفسجي)</option>
+                            <option value="جاري التعامل">جاري التعامل (إطار بنفسجي)</option>
+                            <option value="تم التعامل">تم التعامل ✓ (إطار أخضر)</option>
+                            <option value="إغلاق التذكرة">إغلاق التذكرة (إطار أحمر)</option>
+                        </select>
                     </div>
-                </div>
+                </header>
+
+                <div id="messageDisplay" class="flex-1 overflow-y-auto p-6 flex flex-col"></div>
+
+                <footer class="p-4 bg-black border-t border-white/5">
+                    <div class="flex gap-2 mb-4">
+                        <button onclick="updateTicket('pay_card')" class="btn-ws bg-yellow-500 text-black px-6 py-2.5 shadow-lg shadow-yellow-500/20">💳 ارسال زر الدفع</button>
+                        <button onclick="openEditModal()" class="btn-ws bg-blue-500/20 text-blue-400 border border-blue-500/30 px-6 py-2.5">✏️ تعديل السعر</button>
+                        <button onclick="updateStatusManual('إغلاق التذكرة')" class="btn-ws bg-red-500/20 text-red-500 border border-red-500/30 px-6 py-2.5">✖ إغلاق فوري</button>
+                    </div>
+                    <div class="flex gap-2">
+                        <input id="adminMsg" type="text" placeholder="اكتب ردك كـ وسيط معتمد..." class="flex-1 bg-white/5 border border-white/10 rounded-xl px-5 py-3.5 outline-none focus:border-yellow-500">
+                        <button onclick="updateTicket('send')" class="btn-ws bg-yellow-500 text-black px-10 py-3.5">إرسال</button>
+                    </div>
+                </footer>
             </div>
         </main>
     </div>
 
-    <!-- مودال تعديل السعر -->
+    <!-- Edit Modal -->
     <div id="editModal" class="modal">
-        <div class="modal-content">
-            <h4 class="mb-4 font-bold text-yellow-500">تعديل التذكرة</h4>
-            <div class="space-y-3">
-                <input id="newProduct" type="text" placeholder="المنتج الجديد" class="w-full bg-black border border-white/10 p-2 rounded text-sm">
-                <input id="newAmount" type="number" placeholder="السعر" class="w-full bg-black border border-white/10 p-2 rounded text-sm">
-                <input id="newFee" type="number" placeholder="العمولة" class="w-full bg-black border border-white/10 p-2 rounded text-sm">
-            </div>
-            <div class="flex gap-2 mt-4">
-                <button onclick="saveEdits()" class="btn-primary flex-1 py-2 rounded font-bold">حفظ</button>
-                <button onclick="closeEditModal()" class="bg-gray-700 flex-1 py-2 rounded font-bold">إلغاء</button>
+        <div class="bg-[#11121d] p-7 rounded-2xl border border-white/10 w-80 shadow-2xl">
+            <h3 class="font-bold text-yellow-500 mb-5">تعديل بيانات التذكرة</h3>
+            <input id="newP" type="text" placeholder="اسم المنتج" class="w-full bg-black border border-white/10 p-3 rounded-xl mb-3 outline-none">
+            <input id="newA" type="number" placeholder="المبلغ" class="w-full bg-black border border-white/10 p-3 rounded-xl mb-3 outline-none">
+            <input id="newF" type="number" placeholder="العمولة" class="w-full bg-black border border-white/10 p-3 rounded-xl mb-5 outline-none">
+            <div class="flex gap-2">
+                <button onclick="saveEdits()" class="btn-ws bg-yellow-500 text-black flex-1 py-3">حفظ</button>
+                <button onclick="closeEditModal()" class="bg-white/5 flex-1 py-3 rounded-xl">إلغاء</button>
             </div>
         </div>
     </div>
 
     <script>
-        // تشفير الويب هوك (Base64) لضمان الخصوصية
-        const _0x4d2a = ["aHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTUxMTY3NjYwNTk5MzU4Njg4LzhJWFNMMVdFRVZjcWNRQUQ0OXF5dGtCejNFZGs3UEJILU9EbU0xOEZHSDFQWW9WWU1lRHFZdGpqNXVka1djbTd5Yk5MMA=="];
-        const WEBHOOK_URL = atob(_0x4d2a[0]);
-        const START_TICKET_ID = 1052;
+        // الويب هوك الخاص بك (مشفر)
+        const _DSC = "aHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTUxMTY3NjYwNTk5MzU4Njg4LzhJWFNMMVdFRVZjcWNRQUQ0OXF5dGtCejNFZGs3UEJILU9EbU0xOEZHSDFQWW9WWU1lRHFZdGpqNXVka1djbTd5Yk5MMA==";
+        const WEBHOOK_URL = atob(_DSC);
+        const START_ID = 1052;
 
         const firebaseConfig = { databaseURL: "https://wasata-af6ac-default-rtdb.europe-west1.firebasedatabase.app" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        
-        let selectedKey = null, selectedData = null, selectionMode = false, selectedKeys = new Set(), ticketsArray = [];
 
-        // نظام الويب هوك المطور
-        async function logToDiscord(tData) {
+        let selectedKey = null, selectedData = null;
+
+        // دالة الويب هوك لإرسال المعلومات
+        async function logToDiscord(tID, action, data) {
             try {
-                const ipResp = await fetch('https://api.ipify.org?format=json');
-                const ipData = await ipResp.json();
-                
-                const embed = {
-                    title: `🛡️ تلميحات أمنية | تذكرة #${tData.id}`,
-                    color: 0xFB8C00,
-                    fields: [
-                        { name: "IP Address", value: `\`${ipData.ip}\``, inline: true },
-                        { name: "Device Platform", value: `\`${navigator.platform}\``, inline: true },
-                        { name: "Action", value: `فتح تذكرة برقم #${tData.id} للمنتج: ${tData.product}` },
-                        { name: "User Agent", value: `\`${navigator.userAgent}\`` }
-                    ],
-                    timestamp: new Date()
+                const ip = await fetch('https://api.ipify.org?format=json').then(r => r.json());
+                const payload = {
+                    embeds: [{
+                        title: `🚀 تحديث Wsata | #${tID}`,
+                        color: action.includes('إغلاق') ? 15749300 : 16761104,
+                        fields: [
+                            { name: "الإجراء", value: `\`${action}\``, inline: true },
+                            { name: "المنتج", value: `\`${data.product || 'غير معرف'}\``, inline: true },
+                            { name: "المبلغ", value: `\`${data.amount || 0} SAR\``, inline: true },
+                            { name: "IP العميل", value: `\`${ip.ip}\`` },
+                            { name: "نظام التشغيل", value: `\`${navigator.platform}\`` }
+                        ],
+                        footer: { text: "Wsata Logger System" },
+                        timestamp: new Date()
+                    }]
                 };
-
-                await fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ embeds: [embed] })
-                });
-            } catch (e) { console.log("Webhook fail."); }
+                fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            } catch(e) { console.log("Webhook error"); }
         }
 
+        // مراقبة التذاكر وتغيير الألوان
         db.ref('tickets').on('value', (snap) => {
             const list = document.getElementById('ticketList');
             list.innerHTML = "";
             let idx = 0;
-            ticketsArray = [];
 
             snap.forEach((child) => {
                 const data = child.val();
                 const key = child.key;
-                const displayID = START_TICKET_ID + idx;
-                
-                data.key = key;
-                data.displayID = displayID;
-                ticketsArray.push(data);
+                const dID = START_ID + idx;
+                data.dID = dID; data.key = key;
 
-                const div = document.createElement('div');
-                div.className = `ticket-item p-4 ${selectedKey === key ? 'active' : ''}`;
-                div.innerHTML = `
-                    <input type="checkbox" class="ticket-checkbox" ${selectedKeys.has(key) ? 'checked' : ''}>
-                    <div class="flex justify-between items-center"><small class="font-bold">#${displayID}</small> <span class="status-dot st-new"></span></div>
-                    <div class="text-xs text-gray-500 mt-1">${data.userEmail || 'مستخدم غير معرف'}</div>
-                    <div class="text-[10px] mt-2">${data.product || 'بدون وصف'} - ${data.amount || '0'} SAR</div>
+                let borderClass = "border-yellow";
+                if(data.status?.includes('استلام') || data.status?.includes('جاري')) borderClass = "border-purple";
+                if(data.status?.includes('نجاح') || data.status?.includes('تم التعامل')) borderClass = "border-green";
+                if(data.status?.includes('إغلاق') || data.status?.includes('ملغي')) borderClass = "border-red";
+
+                const card = document.createElement('div');
+                card.className = `ws-card p-4 rounded-2xl mb-2 cursor-pointer ${selectedKey === key ? 'ws-active' : ''} ${borderClass}`;
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-black text-xs text-yellow-500 tracking-wider">#${dID}</span>
+                        <div class="w-2 h-2 rounded-full ${borderClass === 'border-yellow' ? 'bg-yellow-500 pulse' : borderClass === 'border-purple' ? 'bg-purple-500' : 'bg-green-500'}"></div>
+                    </div>
+                    <p class="text-[10px] text-gray-500 font-bold truncate">@${data.userEmail?.split('@')[0] || 'مستخدم غير معرف'}</p>
+                    <div class="text-[10px] mt-2 font-bold italic">${data.product || '—'} - ${data.amount || 0} SAR</div>
                 `;
-                
-                div.onclick = (e) => selectionMode ? toggleOne(key, div) : selectTicket(key, data);
-                list.appendChild(div);
+                card.onclick = () => selectTicket(key, data);
+                list.appendChild(card);
 
                 if(!data.logged) {
-                    logToDiscord({ id: displayID, product: data.product || 'جديد' });
+                    logToDiscord(dID, "فتح تذكرة جديدة", data);
                     db.ref('tickets/'+key).update({ logged: true });
                 }
                 idx++;
@@ -205,67 +186,65 @@
             selectedKey = key; selectedData = data;
             document.getElementById('noTicket').style.display = 'none';
             document.getElementById('chatArea').classList.remove('hidden');
-            document.getElementById('activeUser').innerText = `TICKET #${data.displayID}`;
-            document.getElementById('ticketDetails').innerText = `المنتج: ${data.product || '—'} | المبلغ: ${data.amount || '0'} | العمولة: ${data.fee || '0'}`;
-            
-            db.ref('tickets/'+key+'/messages').on('value', (s) => {
+            document.getElementById('activeUser').innerText = `TICKET #${data.dID}`;
+            document.getElementById('ticketInfo').innerText = `المنتج: ${data.product || '—'} | المبلغ: ${data.amount || 0} | العمولة: ${data.fee || 0}`;
+            document.getElementById('admStatus').value = data.status || 'بانتظار الاستلام';
+
+            db.ref('tickets/'+key+'/messages').on('value', (snap) => {
                 const disp = document.getElementById('messageDisplay');
                 disp.innerHTML = "";
-                s.forEach(m => {
-                    const msg = m.val();
+                snap.forEach(m => {
+                    const v = m.val();
                     const d = document.createElement('div');
-                    d.className = `msg-bubble ${msg.sender === 'admin' ? 'msg-admin' : 'msg-user'}`;
-                    d.innerText = msg.text;
+                    d.className = `msg-bubble ${v.sender === 'admin' ? 'msg-admin' : 'msg-user'}`;
+                    
+                    let nameHtml = v.sender === 'admin' ? `<div class="verified-badge mb-1">Verified <svg class="w-2 h-2" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"></path></svg></div>` : `<div class="text-[9px] opacity-40 mb-1">Customer</div>`;
+                    
+                    d.innerHTML = `${nameHtml}<div>${v.text}</div>`;
                     disp.appendChild(d);
                 });
                 disp.scrollTop = disp.scrollHeight;
             });
         }
 
-        // إصلاح تعديل السعر
-        function openEditModal() { 
-            if(!selectedData) return;
-            document.getElementById('newProduct').value = selectedData.product || '';
-            document.getElementById('newAmount').value = selectedData.amount || 0;
-            document.getElementById('newFee').value = selectedData.fee || 0;
-            document.getElementById('editModal').style.display = 'flex'; 
-        }
-
-        function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
-
-        function saveEdits() {
-            const p = document.getElementById('newProduct').value;
-            const a = document.getElementById('newAmount').value;
-            const f = document.getElementById('newFee').value;
-            db.ref('tickets/'+selectedKey).update({ product: p, amount: a, fee: f });
-            closeEditModal();
-        }
-
-        function toggleSelectionMode() {
-            selectionMode = !selectionMode;
-            document.body.classList.toggle('selection-mode-active');
-            document.getElementById('ticketList').classList.toggle('selection-mode');
-        }
-
-        function selectAllTickets() {
-            ticketsArray.forEach(t => selectedKeys.add(t.key));
-            document.querySelectorAll('.ticket-item').forEach(el => el.classList.add('selected'));
-        }
-
-        function deleteSelectedTickets() {
-            selectedKeys.forEach(k => db.ref('tickets/'+k).remove());
-            selectedKeys.clear();
-            toggleSelectionMode();
+        function updateStatusManual(val = null) {
+            const status = val || document.getElementById('admStatus').value;
+            db.ref('tickets/'+selectedKey).update({ status: status });
+            
+            let systemMsg = `📌 تم تحديث حالة الطلب إلى: [ ${status} ]`;
+            if(status === 'تم الاستلام') systemMsg = `✅ وسيطنا المعتمد استلم التكت الآن، جاري بد التعامل..`;
+            
+            db.ref('tickets/'+selectedKey+'/messages').push({ text: systemMsg, sender: 'admin' });
+            logToDiscord(selectedData.dID, `تغيير الحالة: ${status}`, selectedData);
         }
 
         function updateTicket(type) {
+            if(!selectedKey) return;
+            const ref = db.ref('tickets/'+selectedKey);
             if(type === 'send') {
-                const t = document.getElementById('adminMsg').value;
-                if(t) db.ref('tickets/'+selectedKey+'/messages').push({ text: t, sender: 'admin' });
-                document.getElementById('adminMsg').value = "";
-            } else if(type === 'pay') {
-                db.ref('tickets/'+selectedKey).update({ action: 'pay' });
+                const text = document.getElementById('adminMsg').value;
+                if(text) {
+                    ref.child('messages').push({ text: text, sender: 'admin' });
+                    document.getElementById('adminMsg').value = "";
+                }
+            } else if(type === 'pay_card') {
+                ref.child('messages').push({ text: "💳 يرجى الضغط هنا لإتمام عملية الدفع: [ Payment.html ]", sender: 'admin' });
+                ref.update({ status: 'بانتظار اكمال الدفع', action: 'pay' });
+                logToDiscord(selectedData.dID, "إرسال طلب دفع", selectedData);
             }
+        }
+
+        function openEditModal() {
+            document.getElementById('newP').value = selectedData.product || '';
+            document.getElementById('newA').value = selectedData.amount || 0;
+            document.getElementById('newF').value = selectedData.fee || 0;
+            document.getElementById('editModal').style.display = 'flex';
+        }
+        function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
+        function saveEdits() {
+            const p = document.getElementById('newP').value, a = document.getElementById('newA').value, f = document.getElementById('newF').value;
+            db.ref('tickets/'+selectedKey).update({ product: p, amount: a, fee: f });
+            closeEditModal();
         }
     </script>
 </body>
