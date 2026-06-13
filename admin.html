@@ -2,161 +2,81 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>Wsata Admin | التحكم الشامل</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <title>لوحة التحكم | Wsata Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body { background: #06070a; color: white; font-family: sans-serif; overflow: hidden; height: 100vh; }
-        .sidebar { background: #0b0c14; border-left: 1px solid rgba(255,255,255,0.05); width: 350px; }
-        .ws-card { background: rgba(255,255,255,0.02); border: 2px solid rgba(255,255,255,0.05); border-radius: 12px; margin: 8px; transition: 0.2s; cursor: pointer; }
-        .ws-active { border-color: #fbbf24 !important; background: #131524 !important; }
-        .msg-bubble { max-width: 80%; padding: 12px; border-radius: 12px; margin-bottom: 8px; }
-        .msg-admin { background: rgba(251, 191, 36, 0.08); border-right: 4px solid #fbbf24; margin-right: auto; }
-        .scroll-custom::-webkit-scrollbar { width: 5px; }
-        .scroll-custom::-webkit-scrollbar-thumb { background: #fbbf2433; border-radius: 10px; }
+        body { background: #020306; color: white; display: flex; height: 100vh; font-family: sans-serif; }
+        .list-box { width: 350px; background: #080a12; border-left: 1px solid rgba(255,255,255,0.05); }
+        .t-card { background: rgba(255,255,255,0.03); border: 1px solid transparent; padding: 20px; cursor: pointer; border-radius: 12px; margin: 10px; transition: 0.2s; }
+        .t-card:hover { background: rgba(251, 191, 36, 0.05); }
+        .selected { border-color: #fbbf24; background: rgba(251, 191, 36, 0.08); }
     </style>
 </head>
-<body class="flex flex-col">
+<body>
+    <div class="list-box flex flex-col p-4">
+        <h1 class="text-xl font-black text-yellow-500 mb-6 px-2">Wsata Admin</h1>
+        <div id="tkList" class="flex-1 overflow-y-auto"></div>
+    </div>
 
-    <nav class="p-4 bg-[#0b0c14] border-b-2 border-yellow-500 flex justify-between items-center px-8">
-        <div class="flex items-center gap-3">
-            <h1 class="text-2xl font-black text-yellow-500">Wsata Admin</h1>
-        </div>
-        <div class="flex gap-4">
-            <button onclick="deleteAllTickets()" class="bg-red-500/20 text-red-500 border border-red-500/30 px-4 py-2 rounded-lg text-xs font-bold">حذف جميع التذاكر</button>
-            <button onclick="location.reload()" class="bg-white/5 px-4 py-2 rounded-lg text-xs font-bold">تحديث ↻</button>
-        </div>
-    </nav>
-
-    <div class="flex flex-1 overflow-hidden">
-        <aside class="sidebar flex flex-col scroll-custom overflow-y-auto" id="ticketList"></aside>
-
-        <main class="flex-1 flex flex-col bg-[#05060a]">
-            <div id="noTicket" class="flex-1 flex items-center justify-center opacity-20">بانتظار اختيار تعميد...</div>
-
-            <div id="chatArea" class="hidden flex-1 flex flex-col overflow-hidden">
-                <div class="p-6 bg-white/5 border-b border-white/5 flex justify-between items-center">
-                    <div>
-                        <h2 id="activeHeader" class="font-black text-yellow-500 text-xl tracking-tight">TICKET #--</h2>
-                        <input type="number" id="setAmount" placeholder="المبلغ" class="bg-black border border-white/10 text-xs p-1 rounded w-20">
-                        <input type="number" id="setFee" placeholder="العمولة" class="bg-black border border-white/10 text-xs p-1 rounded w-20">
-                        <button onclick="updatePrice()" class="text-[10px] bg-yellow-500 text-black px-2 py-1 rounded font-bold">تحديث السعر</button>
-                    </div>
-                    <select id="admStatus" onchange="changeStatus()" class="bg-black border border-yellow-500/50 p-2 rounded-xl text-xs text-yellow-500">
-                        <option value="بانتظار الاستلام">بانتظار الاستلام</option>
-                        <option value="تم الاستلام وجاري العمل">تم الاستلام وجاري العمل</option>
-                        <option value="تم التعامل بنجاح ✓">تم التعامل بنجاح ✓</option>
-                        <option value="إغلاق التذكرة ✖">إغلاق التذكرة ✖</option>
-                    </select>
+    <div class="flex-1 flex flex-col">
+        <div id="main" class="hidden flex-1 flex flex-col">
+            <div class="p-8 border-b border-white/5 flex justify-between items-center bg-white/2">
+                <div id="uInfo">--</div>
+                <div class="flex gap-3">
+                    <input type="number" id="a" placeholder="المبلغ" class="bg-black border border-white/10 p-2 w-24 rounded">
+                    <input type="number" id="f" placeholder="العمولة" class="bg-black border border-white/10 p-2 w-24 rounded">
+                    <button onclick="upd()" class="bg-green-600 px-4 rounded text-xs">تحديث التكلفة</button>
+                    <button onclick="askPay()" class="bg-yellow-500 text-black px-4 rounded text-xs font-black">طلب الدفع</button>
                 </div>
-
-                <div id="display" class="flex-1 overflow-y-auto p-8 flex flex-col scroll-custom"></div>
-
-                <footer class="p-5 bg-black border-t border-white/5">
-                    <div class="flex items-center gap-4 mb-4 bg-white/5 p-3 rounded-2xl border border-white/5">
-                        <span class="text-xs font-bold text-gray-400">تحكم العميل:</span>
-                        <button onclick="sendPaymentRequest()" class="bg-yellow-500 text-black px-4 py-2 rounded-lg font-black text-xs">إرسال زر الدفع للعميل</button>
-                        <button onclick="deleteThisTicket()" class="mr-auto text-red-500 text-[10px] underline">حذف هذه التذكرة نهائياً</button>
-                    </div>
-                    <div class="flex gap-3">
-                        <input id="inMsg" type="text" placeholder="اكتب للعميل..." class="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none">
-                        <button onclick="sendMsg()" class="bg-yellow-500 text-black px-12 rounded-2xl font-black">إرسال</button>
-                    </div>
-                </footer>
             </div>
-        </main>
+            <div id="chat" class="flex-1 p-8 overflow-y-auto flex flex-col gap-3"></div>
+            <div class="p-6 bg-black flex gap-3">
+                <input id="msg" type="text" class="flex-1 bg-white/5 p-4 rounded-xl outline-none" placeholder="اكتب ردك...">
+                <button onclick="send()" class="bg-yellow-500 text-black px-10 rounded-xl font-bold">إرسال</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        const WEBHOOK = "https://discord.com/api/webhooks/1511676605993586688/8IXSL1WEEVCqcQAD49qytkBz3Edk7PBH-ODmM18FGH1PYoVYMeDqYtj5udkWcm7ybNL0";
         const firebaseConfig = { databaseURL: "https://wasata-af6ac-default-rtdb.europe-west1.firebasedatabase.app" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        let selected = null, currentData = null;
-
-        async function postToDiscord(action) {
-            try {
-                const payload = {
-                    embeds: [{
-                        title: `🔔 Wsata | تحديث إداري`,
-                        description: `**الإجراء:** ${action}\n**التذكرة:** ${currentData.userEmail}\n**المنتج:** ${currentData.product}`,
-                        color: 3066993, timestamp: new Date()
-                    }]
-                };
-                await fetch(WEBHOOK, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
-            } catch(e) {}
-        }
+        let sel = null;
 
         db.ref('tickets').on('value', snap => {
-            const list = document.getElementById('ticketList');
+            const list = document.getElementById('tkList');
             list.innerHTML = "";
-            snap.forEach(c => {
-                const d = c.val(); const k = c.key;
-                const card = document.createElement('div');
-                card.className = `ws-card p-4 ${selected === k ? 'ws-active' : ''}`;
-                card.innerHTML = `
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-[10px] text-yellow-500 font-bold tracking-tighter">${d.userEmail}</span>
-                        <button onclick="event.stopPropagation(); deleteTicketManual('${k}')" class="text-red-500 text-xs">🗑️</button>
-                    </div>
-                    <p class="text-xs font-bold text-gray-400">${d.product}</p>
-                    <p class="text-[9px] text-yellow-500 mt-1">${d.status || 'جديد'}</p>
-                `;
-                card.onclick = () => selectTicket(k, d);
-                list.appendChild(card);
+            snap.forEach(t => {
+                const d = t.val();
+                const div = document.createElement('div');
+                div.className = `t-card ${sel === t.key ? 'selected' : ''}`;
+                div.innerHTML = `<div class="font-bold text-sm">${d.userEmail}</div><div class="text-[10px] text-gray-500">${d.product}</div>`;
+                div.onclick = () => { sel = t.key; load(t.key, d); };
+                list.appendChild(div);
             });
         });
 
-        function selectTicket(k, d) {
-            selected = k; currentData = d;
-            document.getElementById('noTicket').style.display = 'none';
-            document.getElementById('chatArea').classList.remove('hidden');
-            document.getElementById('activeHeader').innerText = `TICKET: ${d.userEmail.split('@')[0]}`;
-            
+        function load(k, d) {
+            document.getElementById('main').classList.remove('hidden');
+            document.getElementById('uInfo').innerText = d.userEmail;
             db.ref('tickets/'+k+'/messages').on('value', ms => {
-                const disp = document.getElementById('display'); disp.innerHTML = "";
+                const cv = document.getElementById('chat'); cv.innerHTML = "";
                 ms.forEach(m => {
                     const v = m.val();
                     const div = document.createElement('div');
-                    div.className = `msg-bubble ${v.sender === 'admin' ? 'msg-admin' : 'bg-white/5 ml-auto text-left'}`;
-                    div.innerHTML = `<p class="text-sm">${v.text}</p>`;
-                    disp.appendChild(div);
+                    div.className = `p-3 rounded-lg max-w-[70%] ${v.sender === 'admin' ? 'bg-yellow-500/10 border-r-2 border-yellow-500 self-start' : 'bg-white/5 self-end'}`;
+                    div.innerText = v.text;
+                    cv.appendChild(div);
                 });
-                disp.scrollTop = disp.scrollHeight;
+                cv.scrollTop = cv.scrollHeight;
             });
         }
 
-        function updatePrice() {
-            const amt = document.getElementById('setAmount').value;
-            const fee = document.getElementById('setFee').value;
-            db.ref('tickets/'+selected).update({ amount: amt, fee: fee });
-            db.ref('tickets/'+selected+'/messages').push({ text: `🔔 نظام وساطة: تم تحديد السعر بـ ${amt} SAR وعمولة ${fee} SAR`, sender: 'system' });
-        }
-
-        function changeStatus() {
-            const s = document.getElementById('admStatus').value;
-            db.ref('tickets/'+selected).update({ status: s });
-            db.ref('tickets/'+selected+'/messages').push({ text: `🏁 تم تغيير حالة التذكرة إلى: ${s}`, sender: 'admin' });
-            postToDiscord("تغيير حالة التذكرة إلى " + s);
-        }
-
-        function sendPaymentRequest() {
-            db.ref('tickets/'+selected).update({ action: 'showPay' });
-            db.ref('tickets/'+selected+'/messages').push({ text: "💳 يرجى إتمام الدفع الآن عبر الزر الذي ظهر أسفل التوضيح.", sender: 'admin' });
-            postToDiscord("تم إرسال طلب دفع مالي للعميل");
-        }
-
-        function sendMsg() {
-            const m = document.getElementById('inMsg').value;
-            if(!m) return;
-            db.ref('tickets/'+selected+'/messages').push({ text: m, sender: 'admin' });
-            document.getElementById('inMsg').value = "";
-        }
-
-        function deleteThisTicket() { if(confirm('حذف التذكرة الحالية؟')) { db.ref('tickets/'+selected).remove(); selected = null; location.reload(); } }
-        function deleteTicketManual(k) { if(confirm('حذف هذه التذكرة؟')) db.ref('tickets/'+k).remove(); }
-        function deleteAllTickets() { if(confirm('سيتم حذف كافة التذاكر نهائياً!')) db.ref('tickets').remove(); }
+        function upd() { db.ref('tickets/'+sel).update({ amount: document.getElementById('a').value, fee: document.getElementById('f').value, status: 'تم تحديد التكلفة' }); }
+        function askPay() { db.ref('tickets/'+sel).update({ action: 'showPay', status: 'بانتظار التحويل المالي' }); }
+        function send() { const v = document.getElementById('msg').value; if(v) { db.ref('tickets/'+sel+'/messages').push({ text: v, sender: 'admin' }); document.getElementById('msg').value = ""; } }
     </script>
 </body>
 </html>
