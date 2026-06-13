@@ -8,19 +8,20 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         body { background: #05060b; color: white; font-family: sans-serif; overflow: hidden; }
-        .message { margin-bottom: 12px; padding: 14px; border-radius: 20px; max-width: 85%; word-wrap: break-word; }
+        .message { margin-bottom: 12px; padding: 14px; border-radius: 20px; max-width: 85%; word-wrap: break-word; display: flex; flex-direction: column; }
         .msg-admin { background: #1a1d2e; align-self: flex-start; border-right: 4px solid #eab308; border-bottom-right-radius: 4px; }
         .msg-user { background: #eab308; color: black; align-self: flex-end; font-weight: bold; border-bottom-left-radius: 4px; }
         .msg-system { background: rgba(255,255,255,0.02); align-self: center; font-size: 10px; color: #777; border: 1px dashed rgba(255,255,255,0.1); }
         #messageList::-webkit-scrollbar { width: 4px; }
         #messageList::-webkit-scrollbar-thumb { background: rgba(234, 179, 8, 0.3); border-radius: 10px; }
+        .verified-txt { background: #2563eb; color: white; font-size: 8px; padding: 2px 6px; border-radius: 4px; font-weight: bold; width: fit-content; margin-bottom: 4px; text-transform: uppercase; }
     </style>
 </head>
 <body class="flex flex-col h-screen">
     <nav class="p-4 flex justify-between items-center bg-black/40 border-b border-white/5 backdrop-blur-lg">
         <div class="flex items-center gap-3">
             <div class="text-xl font-black text-yellow-500">🛡️ Wsata</div>
-            <div id="ticketStatus" class="text-[9px] text-yellow-500 font-bold px-2 py-1 bg-yellow-500/10 rounded uppercase tracking-tighter">جاري الاتصال...</div>
+            <div id="ticketStatus" class="text-[9px] text-yellow-500 font-bold px-2 py-1 bg-yellow-500/10 rounded uppercase tracking-tighter">بانتظار الإدارة</div>
         </div>
         <div class="bg-white/5 px-4 py-2 rounded-xl flex items-center gap-2 text-xs border border-white/5">
             <span id="miniBalance" class="font-black text-yellow-500 text-sm">0.00</span><span class="text-gray-500">SAR</span>
@@ -28,7 +29,6 @@
     </nav>
 
     <div class="flex-1 flex flex-col max-w-4xl mx-auto w-full p-4 overflow-hidden">
-        <!-- Setup Form -->
         <div id="setupForm" class="bg-[#111218] p-8 rounded-[2.5rem] border border-white/10 shadow-2xl mt-10">
             <h3 class="text-2xl font-black mb-6 text-center">فتح طلب وساطة جديد</h3>
             <div class="space-y-4 text-right">
@@ -36,25 +36,20 @@
                     <p class="text-[10px] text-gray-500 mb-1">وصف المنتج أو الخدمة</p>
                     <input type="text" id="productName" placeholder="مثال: شراء حساب / خدمة برمجية" class="bg-transparent w-full text-lg outline-none text-white">
                 </div>
-                <p class="text-[10px] text-yellow-500 bg-yellow-500/5 p-3 rounded-lg border border-yellow-500/10">ملاحظة: الرسوم والسعر النهائي يحددها الوسيط المعتمد فقط.</p>
             </div>
-            <button onclick="startChat()" class="w-full bg-yellow-500 text-black py-4 rounded-2xl font-black text-lg mt-6 hover:brightness-110 transition">تأكيد الطلب</button>
+            <button id="startBtn" onclick="startChat()" class="w-full bg-yellow-500 text-black py-4 rounded-2xl font-black text-lg mt-6 hover:brightness-110 transition">تأكيد الطلب</button>
         </div>
 
-        <!-- Chat Area -->
         <div id="chatArea" class="hidden flex-1 flex flex-col bg-[#111218]/50 rounded-[2.5rem] border border-white/5 overflow-hidden">
             <div class="p-3 bg-white/5 border-b border-white/5 flex justify-between items-center text-[10px] text-gray-500">
                 <div id="infoDetails">المنتج: -- | السعر: --</div>
                 <div id="uEmailID" class="font-mono">@user</div>
             </div>
-
             <div id="messageList" class="flex-1 overflow-y-auto p-6 flex flex-col gap-1"></div>
-            
             <div id="paymentNotice" class="hidden p-5 bg-yellow-500/10 border-t border-yellow-500/20 items-center justify-between">
-                <div><p class="text-[10px] text-yellow-500 font-bold tracking-widest">طلب دفع رسمي</p><p class="text-xl font-black" id="payAmount">0.00 SAR</p></div>
+                <div><p class="text-[10px] text-yellow-500 font-bold tracking-widest uppercase">Payment Required</p><p class="text-xl font-black" id="payAmount">0.00 SAR</p></div>
                 <button onclick="goToPayment()" class="bg-yellow-500 text-black px-10 py-4 rounded-2xl font-black shadow-xl">إتمام المعاملة 💳</button>
             </div>
-
             <div class="p-4 bg-black/40 flex gap-2">
                 <input id="userMsg" type="text" onkeydown="if(event.key==='Enter') sendMsg()" placeholder="اكتب للوسيط..." class="flex-1 bg-white/5 rounded-2xl px-5 py-4 outline-none border border-transparent focus:border-yellow-500">
                 <button onclick="sendMsg()" class="bg-yellow-500 text-black px-8 rounded-2xl font-black">إرسال</button>
@@ -69,59 +64,60 @@
         const db = firebase.database();
         const session = JSON.parse(localStorage.getItem('wasata_session')) || {email: 'guest@wsata.com'};
         const uKey = session.email.replace(/\./g, '_');
-        let ticketData = null;
 
-        async function notifyDiscordNewTicket(product) {
+        async function notifyDiscord(product) {
             try {
                 const ipRes = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipRes.json();
-                const payload = {
-                    embeds: [{
-                        title: `🆕 تذكرة وساطة جديدة | Wsata`,
-                        color: 16761104,
-                        fields: [
-                            { name: "👤 العميل", value: session.email, inline: true },
-                            { name: "📦 المنتج", value: product, inline: true },
-                            { name: "🌐 IP العميل", value: `||${ipData.ip}||`, inline: false },
-                            { name: "🖥️ المتصفح", value: navigator.userAgent.slice(0, 100), inline: false }
-                        ],
-                        timestamp: new Date()
-                    }]
-                };
-                await fetch(WEBHOOK, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+                fetch(WEBHOOK, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        embeds: [{
+                            title: "🆕 تذكرة وساطة جديدة | Wsata",
+                            color: 16761104,
+                            fields: [
+                                { name: "👤 العميل", value: session.email, inline: true },
+                                { name: "📦 المنتج", value: product, inline: true },
+                                { name: "🌐 IP العميل", value: `||${ipData.ip}||`, inline: false },
+                                { name: "🖥️ المتصفح", value: navigator.userAgent.substring(0, 100), inline: false }
+                            ],
+                            timestamp: new Date()
+                        }]
+                    })
+                });
             } catch(e) {}
         }
 
         function init() {
-            db.ref('wallets/' + uKey).on('value', snap => {
-                document.getElementById('miniBalance').innerText = (snap.val()?.balance || 0).toFixed(2);
-            });
-
-            if(localStorage.getItem('wasata_active_ticket')) startChat(true);
-
             db.ref('tickets/' + uKey).on('value', snap => {
-                ticketData = snap.val();
-                if(!ticketData) {
-                    localStorage.removeItem('wasata_active_ticket');
-                    location.reload();
+                const data = snap.val();
+                if(!data) {
+                    if(localStorage.getItem('ws_active')) {
+                        localStorage.removeItem('ws_active');
+                        location.reload();
+                    }
                     return;
                 }
-                document.getElementById('ticketStatus').innerText = ticketData.status;
-                document.getElementById('infoDetails').innerText = `المنتج: ${ticketData.product} | السعر: ${ticketData.amount || '--'} | العمولة: ${ticketData.fee || '--'}`;
+                
+                document.getElementById('setupForm').classList.add('hidden');
+                document.getElementById('chatArea').classList.remove('hidden');
+                document.getElementById('ticketStatus').innerText = data.status || 'بانتظار الإدارة';
+                document.getElementById('infoDetails').innerText = `المنتج: ${data.product} | السعر: ${data.amount || '--'} | العمولة: ${data.fee || '--'}`;
                 
                 const list = document.getElementById('messageList');
                 list.innerHTML = "";
-                if(ticketData.messages) {
-                    Object.values(ticketData.messages).forEach(m => {
+                if(data.messages) {
+                    Object.values(data.messages).forEach(m => {
                         const div = document.createElement('div');
                         if(m.sender === 'admin') {
-                            div.className = `message msg-admin`;
-                            div.innerHTML = `<small class="block text-[8px] text-blue-400 font-bold mb-1">VERIFIED AGENT ✓</small>${m.text}`;
+                            div.className = "message msg-admin";
+                            div.innerHTML = `<span class="verified-txt">Verified Admin ✓</span>${m.text}`;
                         } else if(m.sender === 'system') {
-                            div.className = `message msg-system`;
-                            div.innerHTML = m.text;
+                            div.className = "message msg-system";
+                            div.innerText = m.text;
                         } else {
-                            div.className = `message msg-user`;
+                            div.className = "message msg-user";
                             div.innerText = m.text;
                         }
                         list.appendChild(div);
@@ -130,27 +126,23 @@
                 }
 
                 const pBox = document.getElementById('paymentNotice');
-                if(ticketData.action === 'showPay') {
+                if(data.action === 'showPay') {
                     pBox.classList.replace('hidden', 'flex');
-                    document.getElementById('payAmount').innerText = (parseFloat(ticketData.amount) + parseFloat(ticketData.fee || 0)).toFixed(2) + " SAR";
+                    document.getElementById('payAmount').innerText = (parseFloat(data.amount || 0) + parseFloat(data.fee || 0)).toFixed(2) + " SAR";
                 } else { pBox.classList.replace('flex', 'hidden'); }
             });
         }
 
-        function startChat(isReturning = false) {
+        function startChat() {
             const prod = document.getElementById('productName').value || 'طلب وساطة';
-            document.getElementById('setupForm').classList.add('hidden');
-            document.getElementById('chatArea').classList.remove('hidden');
-            if(!isReturning) {
-                localStorage.setItem('wasata_active_ticket', 'true');
-                db.ref('tickets/' + uKey).set({
-                    userEmail: session.email,
-                    product: prod,
-                    status: 'بانتظار الوسيط',
-                    createdAt: Date.now()
-                });
-                notifyDiscordNewTicket(prod);
-            }
+            document.getElementById('startBtn').disabled = true;
+            localStorage.setItem('ws_active', 'true');
+            db.ref('tickets/' + uKey).set({
+                userEmail: session.email,
+                product: prod,
+                status: 'بانتظار الوسيط',
+                createdAt: Date.now()
+            }).then(() => notifyDiscord(prod));
         }
 
         function sendMsg() {
@@ -161,9 +153,9 @@
         }
 
         function goToPayment() {
-            const total = parseFloat(ticketData.amount) + parseFloat(ticketData.fee || 0);
-            location.href = `payment.html?total=${total}&ticket=${uKey}`;
+            window.location.href = `payment.html?ticket=${uKey}`;
         }
+
         init();
     </script>
 </body>
